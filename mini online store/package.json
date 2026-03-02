@@ -1,0 +1,13 @@
+{
+  "name": "mini-online-store",
+  "version": "1.0.0",
+  "description": "Mini Online Store API with Express.js",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "node app.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
