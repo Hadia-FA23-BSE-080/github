@@ -1,0 +1,142 @@
+{
+  "users": [
+    {
+      "id": "admin-1",
+      "email": "admin@adflow.com",
+      "password": "admin",
+      "role": "admin",
+      "plan": "Premium"
+    },
+    {
+      "id": "mod-1",
+      "email": "moderator@adflow.com",
+      "password": "mod",
+      "role": "moderator"
+    },
+    {
+      "id": "client-1",
+      "email": "client@adflow.com",
+      "password": "client",
+      "role": "client",
+      "plan": "Basic",
+      "purchases": [
+        {
+          "plan": "Basic",
+          "price": 29.99,
+          "date": "2024-03-25T10:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "client-2",
+      "email": "john@example.com",
+      "password": "password123",
+      "role": "client",
+      "plan": "Pro",
+      "purchases": [
+        {
+          "plan": "Pro",
+          "price": 99.99,
+          "date": "2024-03-20T14:30:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "1774567335380",
+      "email": "user@gmail.com",
+      "password": "12345",
+      "role": "client"
+    },
+    {
+      "id": "1774567388716",
+      "email": "moderate@gmail.com",
+      "password": "12345",
+      "role": "moderator"
+    },
+    {
+      "id": "1774567422388",
+      "email": "you@example.com",
+      "password": "zxcvb",
+      "role": "admin"
+    }
+  ],
+  "ads": [
+    {
+      "id": "ad-1",
+      "userId": "john@example.com",
+      "title": "2023 Tesla Model 3 Long Range",
+      "price": 42000,
+      "description": "Mint condition Tesla Model 3 Long Range. Only 15,000 miles. White exterior, black interior. Autopilot included. Still under factory warranty. No accidents or scratches.",
+      "category": "Vehicles",
+      "status": "approved",
+      "image": "https://images.unsplash.com/photo-1560958089-b8a1929cea89?q=80&w=1000&auto=format&fit=crop"
+    },
+    {
+      "id": "ad-2",
+      "userId": "client@adflow.com",
+      "title": "Luxury Downtown Apartment with City Views",
+      "price": 850000,
+      "description": "Stunning 2 bedroom, 2 bathroom apartment in the heart of downtown. Features floor-to-ceiling windows, modern kitchen with stainless steel appliances, and a private balcony overlooking the city skyline. Building amenities include a pool, gym, and 24/7 concierge.",
+      "category": "Real Estate",
+      "status": "approved",
+      "image": "https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?q=80&w=1000&auto=format&fit=crop"
+    },
+    {
+      "id": "ad-3",
+      "userId": "john@example.com",
+      "title": "MacBook Pro M3 Max (16-inch, 1TB SSD)",
+      "price": 3100,
+      "description": "Brand new MacBook Pro with the latest M3 Max chip. 36GB RAM, 1TB SSD. Space Black color. Box opened only to verify contents. Comes with original Apple Care+ for 3 years.",
+      "category": "Electronics",
+      "status": "approved",
+      "image": "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=1000&auto=format&fit=crop"
+    },
+    {
+      "id": "ad-4",
+      "userId": "client@adflow.com",
+      "title": "Professional Plumbing Services 24/7",
+      "price": 150,
+      "description": "Licensed and insured plumber with 15 years of experience. We handle everything from leaky faucets to complete bathroom remodels. Fast response time and guaranteed satisfaction.",
+      "category": "Services",
+      "status": "approved"
+    },
+    {
+      "id": "ad-5",
+      "userId": "john@example.com",
+      "title": "Sony A7IV Mirrorless Camera Body",
+      "price": 2300,
+      "description": "Excellent condition Sony A7IV body only. Shutter count is around 5000. Includes 2 original batteries, charger, and strap. No signs of wear.",
+      "category": "Electronics",
+      "status": "review",
+      "image": "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=1000&auto=format&fit=crop"
+    },
+    {
+      "id": "ad-6",
+      "userId": "client@adflow.com",
+      "title": "2019 Toyota Tacoma TRD Off-Road",
+      "price": 32000,
+      "description": "Great truck, perfect for off-roading or daily driving. 4x4, 6-speed automatic, V6 engine. Upgraded tires and suspension. Has 45,000 miles. Clean title.",
+      "category": "Vehicles",
+      "status": "review",
+      "image": "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?q=80&w=1000&auto=format&fit=crop"
+    },
+    {
+      "id": "ad-7",
+      "userId": "john@example.com",
+      "title": "Vintage Rolex Submariner (1980)",
+      "price": 12500,
+      "description": "Classic Rolex Submariner reference 5513. Excellent patina on the dial and hands. Keeping perfect time. Recently serviced.",
+      "category": "Electronics",
+      "status": "draft"
+    },
+    {
+      "id": "ad-8",
+      "userId": "client@adflow.com",
+      "title": "Spam Ad - Buy Followers Now",
+      "price": 10,
+      "description": "Get 10,000 followers on your social media account overnight! 100% legal, no bots. Click the link in bio.",
+      "category": "Services",
+      "status": "rejected"
+    }
+  ]
+}
