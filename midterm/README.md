@@ -3,43 +3,66 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 Open https://github-ji8l.vercel.app/ to see the result.
 
-Project Overview
+# 🚀 AdFlow Pro
 
-AdFlow Pro is a modern web-based sponsored listing marketplace developed to manage and streamline the advertisement posting process. The platform provides a structured workflow where users can submit, review, and manage ads efficiently through role-based access.
+AdFlow Pro is a modern web-based sponsored listing marketplace designed to manage and streamline the advertisement posting process. It provides a structured workflow where ads are submitted, reviewed, and published through role-based access.
 
-The system is designed with three main user roles: Client, Moderator, and Admin. Each role has specific permissions and a dedicated dashboard, ensuring secure and organized operations within the platform.
+---
 
-⚙️ Key Features
-Role-Based System
-Separate dashboards and functionalities for Clients, Moderators, and Admins.
-Ad Approval Workflow
-All advertisements go through a moderation process before being published, ensuring quality and authenticity.
-User-Friendly Dashboards
-Interactive dashboards allow users to easily manage ads and activities.
-Secure Authentication
-User login and access are securely handled through Supabase.
-Real-Time Backend Integration
-Supabase provides database management, authentication, and real-time updates.
-Responsive Design
-The platform is fully responsive and works smoothly across different devices.
-🧠 Working Mechanism
-The Client submits an advertisement through their dashboard.
-The advertisement is sent to the Moderator for review.
-The Moderator checks the ad and either approves or rejects it.
-Approved ads are published and become visible on the platform.
-The Admin manages users, monitors system activities, and maintains overall control.
-🎯 Objective
+## 📌 Project Overview
 
-The main objective of AdFlow Pro is to create a secure and efficient advertisement management system that ensures proper moderation, user role separation, and smooth workflow automation. This project demonstrates practical implementation of modern web development concepts.
+The platform is built with three main user roles:
 
-🛠️ Technologies Used
-Frontend: Next.js / React
-Backend: Supabase
-Database: PostgreSQL (via Supabase)
-Deployment: Vercel
-💡 Conclusion
+- **Client** – Submits advertisements  
+- **Moderator** – Reviews and approves/rejects ads  
+- **Admin** – Manages users and overall system  
 
-AdFlow Pro is a complete solution for managing sponsored listings with a focus on security, usability, and structured workflow. It reflects real-world application development practices and highlights the use of modern technologies to build scalable web applications.
+Each role has its own dashboard and permissions, ensuring a secure and organized system.
+
+---
+
+## ⚙️ Key Features
+
+- Role-Based Access Control (Client, Moderator, Admin)  
+- Secure Ad Approval Workflow  
+- Interactive User Dashboards  
+- Supabase Authentication & Database Integration  
+- Real-Time Data Handling  
+- Fully Responsive Design  
+
+---
+
+## 🧠 Working Mechanism
+
+1. Client submits an advertisement  
+2. Ad is sent to Moderator for review  
+3. Moderator approves or rejects the ad  
+4. Approved ads are published  
+5. Admin monitors and manages the system  
+
+---
+
+## 🎯 Objective
+
+The main objective of AdFlow Pro is to provide a secure and efficient platform for advertisement management. It ensures proper moderation, structured workflow, and role-based access control.
+
+---
+
+## 🛠️ Technologies Used
+
+- **Frontend:** Next.js / React  
+- **Backend:** Supabase  
+- **Database:** PostgreSQL  
+- **Deployment:** Vercel  
+
+---
+
+## 💡 Conclusion
+
+AdFlow Pro is a complete solution for managing sponsored listings. It demonstrates real-world concepts such as authentication, role management, and workflow automation using modern web technologies.
+
+---
+
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 <img width="1913" height="902" alt="s1" src="https://github.com/user-attachments/assets/6f44299b-7a7b-4911-b5f2-6ab8a2371a3d" />
