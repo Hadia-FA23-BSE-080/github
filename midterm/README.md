@@ -1,39 +1,70 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Getting Started
 
-First, run the development server:
+Open https://github-ji8l.vercel.app/ to see the result.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+# 🚀 AdFlow Pro
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+AdFlow Pro is a modern web-based sponsored listing marketplace designed to manage and streamline the advertisement posting process. It provides a structured workflow where ads are submitted, reviewed, and published through role-based access.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📌 Project Overview
 
-## Learn More
+The platform is built with three main user roles:
 
-To learn more about Next.js, take a look at the following resources:
+- **Client** – Submits advertisements  
+- **Moderator** – Reviews and approves/rejects ads  
+- **Admin** – Manages users and overall system  
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Each role has its own dashboard and permissions, ensuring a secure and organized system.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## ⚙️ Key Features
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Role-Based Access Control (Client, Moderator, Admin)  
+- Secure Ad Approval Workflow  
+- Interactive User Dashboards  
+- Supabase Authentication & Database Integration  
+- Real-Time Data Handling  
+- Fully Responsive Design  
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## 🧠 Working Mechanism
+
+1. Client submits an advertisement  
+2. Ad is sent to Moderator for review  
+3. Moderator approves or rejects the ad  
+4. Approved ads are published  
+5. Admin monitors and manages the system  
+
+---
+
+## 🎯 Objective
+
+The main objective of AdFlow Pro is to provide a secure and efficient platform for advertisement management. It ensures proper moderation, structured workflow, and role-based access control.
+
+---
+
+## 🛠️ Technologies Used
+
+- **Frontend:** Next.js / React  
+- **Backend:** Supabase  
+- **Database:** PostgreSQL  
+- **Deployment:** Vercel  
+
+---
+
+## 💡 Conclusion
+
+AdFlow Pro is a complete solution for managing sponsored listings. It demonstrates real-world concepts such as authentication, role management, and workflow automation using modern web technologies.
+
+---
+
+
+
 <img width="1913" height="902" alt="s1" src="https://github.com/user-attachments/assets/6f44299b-7a7b-4911-b5f2-6ab8a2371a3d" />
 <img width="1917" height="905" alt="s7" src="https://github.com/user-attachments/assets/c3861a76-a70d-4c8a-a0ec-2d6f4b0c1c1c" />
 
