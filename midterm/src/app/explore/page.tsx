@@ -6,6 +6,9 @@ export default function ExplorePage() {
   const [ads, setAds] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All');
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
+  const [sortBy, setSortBy] = useState('newest');
 
   useEffect(() => {
     fetch('/api/ads')
@@ -18,40 +21,92 @@ export default function ExplorePage() {
   const filteredAds = ads.filter(ad => {
     const matchCategory = category === 'All' || ad.category === category;
     const matchSearch = ad.title?.toLowerCase().includes(search.toLowerCase());
-    return matchCategory && matchSearch;
+    const matchMinPrice = minPrice === '' || ad.price >= Number(minPrice);
+    const matchMaxPrice = maxPrice === '' || ad.price <= Number(maxPrice);
+    return matchCategory && matchSearch && matchMinPrice && matchMaxPrice;
+  }).sort((a, b) => {
+    if (sortBy === 'price-asc') return a.price - b.price;
+    if (sortBy === 'price-desc') return b.price - a.price;
+    // newest based on id which is a timestamp
+    return b.id.toString().localeCompare(a.id.toString());
   });
 
   return (
     <div className="container mx-auto px-4 py-12 flex-1 relative">
       <h1 className="text-4xl font-bold mb-6">Explore the Marketplace</h1>
       
-      {/* Search & Filters */}
-      <div className="flex flex-col md:flex-row gap-4 mb-10 bg-card border border-white/10 p-4 rounded-xl shadow-xl relative z-20">
-        <input 
-          type="text" 
-          placeholder="🔎 Search for properties, vehicles, electronics..." 
-          className="flex-1 bg-background border border-white/10 rounded-lg px-5 py-3 text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
-        <select 
-          className="md:w-64 bg-background border border-white/10 rounded-lg px-5 py-3 text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition appearance-none cursor-pointer"
-          value={category}
-          onChange={e => setCategory(e.target.value)}
-        >
-          <option className="bg-card text-white" value="All">All Categories</option>
-          <option className="bg-card text-white" value="Real Estate">Real Estate</option>
-          <option className="bg-card text-white" value="Vehicles">Vehicles</option>
-          <option className="bg-card text-white" value="Electronics">Electronics</option>
-          <option className="bg-card text-white" value="Services">Services</option>
-        </select>
+      {/* Advanced Search & Filters Panel */}
+      <div className="bg-card border border-white/10 p-6 rounded-2xl shadow-xl mb-10 relative z-20 space-y-4">
+        
+        {/* Top Row: Search and Category */}
+        <div className="flex flex-col md:flex-row gap-4">
+          <input 
+            type="text" 
+            placeholder="🔎 Search for properties, vehicles, electronics..." 
+            className="flex-1 bg-background border border-white/10 rounded-lg px-5 py-3 text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+          <select 
+            className="md:w-64 bg-background border border-white/10 rounded-lg px-5 py-3 text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition appearance-none cursor-pointer"
+            value={category}
+            onChange={e => setCategory(e.target.value)}
+          >
+            <option className="bg-card text-white" value="All">All Categories</option>
+            <option className="bg-card text-white" value="Real Estate">Real Estate</option>
+            <option className="bg-card text-white" value="Vehicles">Vehicles</option>
+            <option className="bg-card text-white" value="Electronics">Electronics</option>
+            <option className="bg-card text-white" value="Services">Services</option>
+          </select>
+        </div>
+
+        {/* Bottom Row: Price Range and Sort */}
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex flex-1 gap-4">
+            <input 
+              type="number" 
+              placeholder="Min Price ($)" 
+              className="w-1/2 bg-background border border-white/10 rounded-lg px-5 py-3 text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition"
+              value={minPrice}
+              onChange={e => setMinPrice(e.target.value)}
+            />
+            <input 
+              type="number" 
+              placeholder="Max Price ($)" 
+              className="w-1/2 bg-background border border-white/10 rounded-lg px-5 py-3 text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition"
+              value={maxPrice}
+              onChange={e => setMaxPrice(e.target.value)}
+            />
+          </div>
+          <select 
+            className="md:w-64 bg-background border border-white/10 rounded-lg px-5 py-3 text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition appearance-none cursor-pointer"
+            value={sortBy}
+            onChange={e => setSortBy(e.target.value)}
+          >
+            <option className="bg-card text-white" value="newest">Sort by Newest</option>
+            <option className="bg-card text-white" value="price-asc">Price (Low to High)</option>
+            <option className="bg-card text-white" value="price-desc">Price (High to Low)</option>
+          </select>
+        </div>
+        
       </div>
       
+      {/* Results Header */}
+      <h2 className="text-xl font-medium mb-6 text-foreground/80">
+        Showing {filteredAds.length} results
+      </h2>
+
       {filteredAds.length === 0 ? (
-        <div className="text-center p-16 bg-card border border-white/10 rounded-2xl shadow-lg mt-12 max-w-2xl mx-auto">
+        <div className="text-center p-16 bg-card border border-white/10 rounded-2xl shadow-lg max-w-2xl mx-auto">
           <div className="text-6xl mb-6 opacity-80">🕵️</div>
-          <p className="text-2xl font-bold mb-2">No exact matches found</p>
-          <p className="text-foreground/50">Try adjusting your search terms or selecting a different category filter.</p>
+          <p className="text-2xl font-bold mb-2">No matches found</p>
+          <p className="text-foreground/50">Try adjusting your filters or search terms.</p>
+          <button 
+            onClick={() => { setSearch(''); setCategory('All'); setMinPrice(''); setMaxPrice(''); setSortBy('newest'); }}
+            className="mt-6 px-6 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition"
+          >
+            Clear Filters
+          </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
