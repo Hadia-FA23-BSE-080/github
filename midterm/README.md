@@ -64,7 +64,7 @@ AdFlow Pro is a complete solution for managing sponsored listings. It demonstrat
 ---
 
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
 <img width="1913" height="902" alt="s1" src="https://github.com/user-attachments/assets/6f44299b-7a7b-4911-b5f2-6ab8a2371a3d" />
 <img width="1917" height="905" alt="s7" src="https://github.com/user-attachments/assets/c3861a76-a70d-4c8a-a0ec-2d6f4b0c1c1c" />
 
