@@ -5,36 +5,41 @@ Open https://github-ji8l.vercel.app/ to see the result.
 
 Project Overview
 
-AdFlow Pro is a modern web-based sponsored listing marketplace designed to streamline the process of posting, managing, and approving advertisements. The platform supports multiple user roles including Clients, Moderators, and Admins, each with dedicated dashboards and functionalities.
+AdFlow Pro is a modern web-based sponsored listing marketplace developed to manage and streamline the advertisement posting process. The platform provides a structured workflow where users can submit, review, and manage ads efficiently through role-based access.
 
-The system allows clients to submit ads, which are then reviewed by moderators before being approved and published. This ensures quality control and maintains the integrity of the platform.
+The system is designed with three main user roles: Client, Moderator, and Admin. Each role has specific permissions and a dedicated dashboard, ensuring secure and organized operations within the platform.
 
 ⚙️ Key Features
-Role-Based Access Control
-Different dashboards and permissions for Clients, Moderators, and Admins.
-Secure Ad Posting Workflow
-Ads go through a proper approval process before being published.
-Dashboard System
-Each user role has a personalized dashboard for managing tasks.
-Supabase Integration
-Backend services including authentication, database, and real-time features are powered by Supabase.
-Responsive UI
-Clean and user-friendly interface accessible on different devices.
-🧠 How It Works
-A Client submits an advertisement.
-The ad is sent to the Moderator for review.
-The Moderator either approves or rejects the ad.
-Approved ads become visible on the platform.
-The Admin manages users, monitors activity, and controls the system.
-🎯 Purpose of the Project
+Role-Based System
+Separate dashboards and functionalities for Clients, Moderators, and Admins.
+Ad Approval Workflow
+All advertisements go through a moderation process before being published, ensuring quality and authenticity.
+User-Friendly Dashboards
+Interactive dashboards allow users to easily manage ads and activities.
+Secure Authentication
+User login and access are securely handled through Supabase.
+Real-Time Backend Integration
+Supabase provides database management, authentication, and real-time updates.
+Responsive Design
+The platform is fully responsive and works smoothly across different devices.
+🧠 Working Mechanism
+The Client submits an advertisement through their dashboard.
+The advertisement is sent to the Moderator for review.
+The Moderator checks the ad and either approves or rejects it.
+Approved ads are published and become visible on the platform.
+The Admin manages users, monitors system activities, and maintains overall control.
+🎯 Objective
 
-The main goal of AdFlow Pro is to provide a secure and efficient platform for managing sponsored content while ensuring proper moderation and user role separation. It demonstrates real-world concepts like authentication, role management, and workflow automation.
+The main objective of AdFlow Pro is to create a secure and efficient advertisement management system that ensures proper moderation, user role separation, and smooth workflow automation. This project demonstrates practical implementation of modern web development concepts.
 
 🛠️ Technologies Used
 Frontend: Next.js / React
 Backend: Supabase
 Database: PostgreSQL (via Supabase)
 Deployment: Vercel
+💡 Conclusion
+
+AdFlow Pro is a complete solution for managing sponsored listings with a focus on security, usability, and structured workflow. It reflects real-world application development practices and highlights the use of modern technologies to build scalable web applications.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 <img width="1913" height="902" alt="s1" src="https://github.com/user-attachments/assets/6f44299b-7a7b-4911-b5f2-6ab8a2371a3d" />
