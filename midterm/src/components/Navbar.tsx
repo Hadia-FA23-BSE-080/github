@@ -41,7 +41,11 @@ export function Navbar() {
         
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
           <Link href="/explore" className="text-foreground/80 hover:text-primary transition-colors">Explore</Link>
-          <Link href="/pricing" className="text-foreground/80 hover:text-primary transition-colors">Pricing</Link>
+          {user?.role === 'client' && (
+            <Link href="/pricing" className="text-foreground/80 hover:text-primary transition-colors flex items-center gap-1">
+              Pricing <span className="flex h-2 w-2 rounded-full bg-primary/80 animate-ping ml-1" />
+            </Link>
+          )}
 
           {/* Role Based Conditional Links */}
           {user?.role === 'client' && (

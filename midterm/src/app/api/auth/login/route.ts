@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient';
+import { getUsers } from '@/lib/db';
 
 export async function POST(req: Request) {
   const { email, password } = await req.json();
+  const users = getUsers();
   
-  // Real login checking BOTH email and password since we don't have built-in auth logic right now
-  const { data: user, error } = await supabase.from('users').select('*').eq('email', email).eq('password', password).single();
+  const user = users.find((u: any) => u.email === email && u.password === password);
   
-  if (error || !user) {
+  if (!user) {
     return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
   }
   

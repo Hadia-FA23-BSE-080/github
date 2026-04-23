@@ -1,10 +1,8 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient';
+import { getUsers } from '@/lib/db';
 
 export async function GET() {
-  const { data: users, error } = await supabase.from('users').select('*, purchases(*)');
-  
-  if (error) return NextResponse.json([], { status: 500 });
+  const users = getUsers();
   
   const safeUsers = users.map((u: any) => {
     const { password, ...rest } = u;

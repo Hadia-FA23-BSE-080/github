@@ -58,6 +58,13 @@
       "email": "you@example.com",
       "password": "zxcvb",
       "role": "admin"
+    },
+    {
+      "id": "1776971669756",
+      "email": "admin@gmail.com",
+      "password": "123456",
+      "role": "admin",
+      "plan": "None"
     }
   ],
   "ads": [

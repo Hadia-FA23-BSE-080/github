@@ -1,28 +1,35 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient';
+import { getAds, saveAds } from '@/lib/db';
 
 export async function GET(req: Request, context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
-  const { data: ad, error } = await supabase.from('ads').select('*').eq('id', params.id).single();
+  const ads = getAds();
+  const ad = ads.find((a: any) => a.id === params.id || a.id.toString() === params.id);
   
-  if (error || !ad) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  return NextResponse.json({ ...ad, userId: ad.user_id });
+  if (!ad) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  return NextResponse.json({ ...ad, userId: ad.userId || ad.user_id });
 }
 
 export async function PUT(req: Request, context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
   const body = await req.json();
+  const ads = getAds();
   
-  const { error } = await supabase.from('ads').update(body).eq('id', params.id);
+  const index = ads.findIndex((a: any) => a.id === params.id || a.id.toString() === params.id);
+  if (index !== -1) {
+    ads[index] = { ...ads[index], ...body };
+    saveAds(ads);
+  }
   
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
   return NextResponse.json({ success: true });
 }
 
 export async function DELETE(req: Request, context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
-  const { error } = await supabase.from('ads').delete().eq('id', params.id);
+  let ads = getAds();
   
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  ads = ads.filter((a: any) => a.id !== params.id && a.id.toString() !== params.id);
+  saveAds(ads);
+  
   return NextResponse.json({ success: true });
 }

@@ -1,27 +1,31 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient';
+import { getUsers, saveUsers } from '@/lib/db';
 
 export async function POST(req: Request) {
   // Wait for the JSON parsing
   const { email, planName, planPrice } = await req.json();
   
-  const { data: user } = await supabase.from('users').select('id, email, plan').eq('email', email).single();
+  const users = getUsers();
+  const index = users.findIndex((u: any) => u.email === email);
   
-  if (!user) {
+  if (index === -1) {
     return NextResponse.json({ error: 'User not found' }, { status: 404 });
   }
   
   // Update user's current plan
-  await supabase.from('users').update({ plan: planName }).eq('email', email);
+  users[index].plan = planName;
   
-  // Insert into purchases table separately
-  const purchase = {
-    id: Date.now().toString(),
-    user_id: user.id,
-    plan_name: planName,
-    price: planPrice
-  };
-  await supabase.from('purchases').insert([purchase]);
+  if (!users[index].purchases) {
+    users[index].purchases = [];
+  }
+  
+  users[index].purchases.push({
+    plan: planName,
+    price: planPrice,
+    date: new Date().toISOString()
+  });
+  
+  saveUsers(users);
   
   return NextResponse.json({ success: true, plan: planName });
 }

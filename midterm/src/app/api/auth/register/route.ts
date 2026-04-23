@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient';
+import { getUsers, saveUsers } from '@/lib/db';
 
 export async function POST(req: Request) {
   const { email, password, role = 'client' } = await req.json();
+  const users = getUsers();
   
-  const { data: existingUser } = await supabase.from('users').select('id').eq('email', email).single();
+  const existingUser = users.find((u: any) => u.email === email);
   
   if (existingUser) {
     return NextResponse.json({ error: 'User already exists' }, { status: 400 });
@@ -12,9 +13,9 @@ export async function POST(req: Request) {
   
   const newUser = { id: Date.now().toString(), email, password, role, plan: 'None' };
   
-  const { data, error } = await supabase.from('users').insert([newUser]).select().single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  users.push(newUser);
+  saveUsers(users);
   
-  const { password: _, ...safeUser } = data;
+  const { password: _, ...safeUser } = newUser;
   return NextResponse.json(safeUser);
 }

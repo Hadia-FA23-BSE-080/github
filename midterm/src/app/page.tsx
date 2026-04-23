@@ -1,8 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Search, MapPin, Tag, ArrowRight, ShieldCheck, Clock, Award } from "lucide-react";
+import { Search, MapPin, Tag, ArrowRight, ShieldCheck, Clock, Award, Sparkles, Zap, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
 
 const FADE_UP_ANIMATION_VARIANTS = {
   hidden: { opacity: 0, y: 10 },
@@ -64,15 +65,29 @@ const PACKAGES = [
 ];
 
 export default function Home() {
+  const [user, setUser] = useState<any>(null);
+  const [isClientAction, setIsClientAction] = useState(false);
+
+  useEffect(() => {
+    setIsClientAction(true);
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      setUser(JSON.parse(userStr));
+    }
+  }, []);
+
   return (
     <>
+      {/* Dynamic Background */}
+      <div className="fixed inset-0 -z-20 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/20 via-background to-background pointer-events-none" />
+      <div className="fixed inset-0 -z-10 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay pointer-events-none" />
       {/* Hero Section */}
-      <section className="relative overflow-hidden pt-24 pb-32">
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/20 via-background to-background" />
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl opacity-50 mix-blend-screen animate-pulse" />
-        <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-accent/20 rounded-full blur-3xl opacity-40 mix-blend-screen animate-pulse delay-1000" />
+      <section className="relative overflow-hidden pt-32 pb-40">
+        <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[120px] opacity-60 mix-blend-screen animate-pulse pointer-events-none" />
+        <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-violet-600/20 rounded-full blur-[120px] opacity-50 mix-blend-screen animate-pulse delay-700 pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[300px] bg-blue-500/10 rounded-full blur-[100px] opacity-40 mix-blend-screen pointer-events-none" />
         
-        <div className="container mx-auto px-4 max-w-5xl text-center space-y-8 relative z-10">
+        <div className="container mx-auto px-4 max-w-6xl text-center space-y-8 relative z-10">
           <motion.div
             initial="hidden"
             animate="show"
@@ -89,11 +104,11 @@ export default function Home() {
               </span>
             </motion.div>
             
-            <motion.h1 variants={FADE_UP_ANIMATION_VARIANTS} className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 bg-gradient-to-br from-white via-white/90 to-white/40 bg-clip-text text-transparent">
-              Sell Faster. Buy Smarter. <br /> Publish with Confidence.
+            <motion.h1 variants={FADE_UP_ANIMATION_VARIANTS} className="text-6xl md:text-8xl font-black tracking-tighter mb-8 bg-gradient-to-br from-white via-white/90 to-white/40 bg-clip-text text-transparent drop-shadow-sm leading-tight">
+              Sell Faster. <span className="bg-gradient-to-r from-primary to-violet-400 bg-clip-text text-transparent">Buy Smarter.</span> <br /> Publish with Confidence.
             </motion.h1>
             
-            <motion.p variants={FADE_UP_ANIMATION_VARIANTS} className="text-lg md:text-xl text-foreground/70 max-w-2xl mx-auto mb-10">
+            <motion.p variants={FADE_UP_ANIMATION_VARIANTS} className="text-xl md:text-2xl text-foreground/70 max-w-3xl mx-auto mb-12 font-medium">
               AdFlow Pro is a curated marketplace requiring rigorous moderator approval. Every ad you see is active, legitimate, and ranked for the best experience.
             </motion.p>
             
@@ -134,14 +149,16 @@ export default function Home() {
       </section>
 
       {/* Featured Ads Section */}
-      <section className="py-24 container mx-auto px-4">
-        <div className="flex justify-between items-end mb-12">
+      <section className="py-32 container mx-auto px-4 relative z-10">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] pointer-events-none" />
+        
+        <div className="flex justify-between items-end mb-16 relative">
           <div>
-            <h2 className="text-3xl font-bold mb-2 text-white">Trending Near You</h2>
-            <p className="text-foreground/60">Explore the highest quality verified listings this week.</p>
+            <h2 className="text-4xl md:text-5xl font-black mb-4 text-white tracking-tight">Trending Near You <Sparkles className="inline-block w-8 h-8 text-yellow-400 -mt-2 animate-pulse" /></h2>
+            <p className="text-foreground/60 text-lg">Explore the highest quality verified listings this week.</p>
           </div>
-          <button className="text-primary hover:text-primary/80 font-medium flex items-center gap-1 group">
-            View All <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          <button className="text-primary hover:text-primary/80 font-medium flex items-center gap-1 group bg-primary/10 px-6 py-3 rounded-full hover:bg-primary/20 transition-all border border-primary/20 hover:border-primary/50 text-sm shadow-[0_0_15px_rgba(79,70,229,0.2)]">
+            Explore Collection <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </button>
         </div>
         
@@ -190,64 +207,69 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Pricing/Packages */}
-      <section className="py-24 bg-card/30 border-t border-white/5 relative">
-        <div className="container mx-auto px-4 max-w-6xl text-center">
-          <h2 className="text-3xl font-bold mb-4 text-white">Choose Your Audience Reach</h2>
-          <p className="text-foreground/60 max-w-2xl mx-auto mb-16">
-            AdFlow Pro uses algorithmic ranking to display ads based on relevance and selected packages. Pick a plan to amplify your visibility.
-          </p>
+      {/* Pricing/Packages - Only show if client */}
+      {isClientAction && (!user || user.role === 'client') && (
+        <section className="py-32 bg-card/40 backdrop-blur-sm relative z-10 border-t border-white/5 overflow-hidden">
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
+          <div className="container mx-auto px-4 max-w-7xl text-center relative">
+            <h2 className="text-4xl md:text-5xl font-black mb-6 text-white tracking-tight">Choose Your Audience Reach <Zap className="inline-block w-8 h-8 text-primary -mt-2 animate-bounce" /></h2>
+            <p className="text-foreground/60 max-w-2xl mx-auto mb-20 text-lg">
+              AdFlow Pro uses algorithmic ranking to display ads based on relevance and selected packages. Pick a plan to amplify your visibility.
+            </p>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {PACKAGES.map((pkg, i) => (
-              <motion.div 
-                key={pkg.name}
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className={cn(
-                  "rounded-3xl p-8 border text-left relative flex flex-col",
-                  pkg.featured 
-                    ? "bg-gradient-to-b from-primary/10 to-card border-primary ring-1 ring-primary shadow-[0_0_40px_rgba(79,70,229,0.2)]" 
-                    : "bg-card border-white/10 hover:border-white/20"
-                )}
-              >
-                {pkg.featured && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs font-bold px-4 py-1 rounded-full tracking-wide">
-                    RECOMMENDED
+            <div className="grid lg:grid-cols-3 gap-8 items-center">
+              {PACKAGES.map((pkg, i) => (
+                <motion.div 
+                  key={pkg.name}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.15, type: "spring", stiffness: 100 }}
+                  className={cn(
+                    "rounded-[2rem] p-10 text-left relative flex flex-col group transition-all duration-300",
+                    pkg.featured 
+                      ? "bg-gradient-to-b from-primary/20 via-card to-card border border-primary/50 shadow-[0_0_50px_rgba(79,70,229,0.3)] scale-105 z-10 hover:shadow-[0_0_80px_rgba(79,70,229,0.4)]" 
+                      : "bg-card/50 border border-white/10 hover:border-white/30 backdrop-blur-md hover:bg-card/80"
+                  )}
+                >
+                  {pkg.featured && (
+                    <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-primary to-violet-500 text-white text-xs font-black px-6 py-2 rounded-full tracking-wider shadow-lg shadow-primary/30 flex items-center gap-1">
+                      <Star className="w-3 h-3 fill-white" /> HIGHEST ROI
+                    </div>
+                  )}
+                  
+                  <div className="mb-8 h-full font-medium">
+                    <h3 className={cn("text-2xl font-bold mb-4", pkg.featured ? "text-primary" : "text-white")}>{pkg.name}</h3>
+                    <div className="flex items-baseline gap-1 mb-8">
+                      <span className="text-5xl font-black text-white">{pkg.price}</span>
+                      <span className="text-foreground/50 text-base font-medium">/ {pkg.duration}</span>
+                    </div>
+                    <ul className="space-y-4 mb-8">
+                      {pkg.features.map(f => (
+                         <li key={f} className="flex items-start gap-3 text-base text-foreground/80 group-hover:text-white transition-colors">
+                          <div className={cn("mt-1 rounded-full p-0.5", pkg.featured ? "bg-primary/20 text-primary" : "bg-white/10 text-foreground/50 group-hover:text-primary group-hover:bg-primary/20 transition-all")}>
+                             <ShieldCheck className="w-4 h-4" />
+                          </div>
+                          {f}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                )}
-                
-                <div className="mb-6 h-full font-medium">
-                  <h3 className="text-xl font-semibold mb-2">{pkg.name}</h3>
-                  <div className="flex items-baseline gap-1 mb-4">
-                    <span className="text-4xl font-extrabold text-white">{pkg.price}</span>
-                    <span className="text-foreground/50 text-sm">/ {pkg.duration}</span>
-                  </div>
-                  <ul className="space-y-3 mb-8">
-                    {pkg.features.map(f => (
-                      <li key={f} className="flex items-start gap-2 text-sm text-foreground/80">
-                        <ShieldCheck className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                
-                <button className={cn(
-                  "w-full py-3 rounded-xl font-semibold transition-all mt-auto",
-                  pkg.featured 
-                    ? "bg-primary text-white hover:bg-primary/90" 
-                    : "bg-white/5 hover:bg-white/10 text-white"
-                )}>
-                  Select Package
-                </button>
-              </motion.div>
-            ))}
+                  
+                  <button className={cn(
+                    "w-full py-4 rounded-2xl font-bold transition-all mt-auto text-base flex items-center justify-center gap-2",
+                    pkg.featured 
+                      ? "bg-primary text-white hover:bg-primary/90 shadow-[0_0_20px_rgba(79,70,229,0.4)] hover:shadow-[0_0_30px_rgba(79,70,229,0.6)] hover:-translate-y-1" 
+                      : "bg-white/5 hover:bg-white/10 text-white border border-white/10 hover:border-white/30 hover:-translate-y-1"
+                  )}>
+                    Select {pkg.name} <ArrowRight className="w-4 h-4" />
+                  </button>
+                </motion.div>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
     </>
   );
 }
