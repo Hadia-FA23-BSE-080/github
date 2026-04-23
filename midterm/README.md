@@ -2,6 +2,9 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 
 Open https://github-ji8l.vercel.app/ to see the result.
+SIGN IN: For admin: email:"admin@gmail.com", password: "123456".
+         For moderator: email: "moderate@gmail.com", password: "12345".
+         For client: email: "user@gmail.com", password: "12345".
 
 # 🚀 AdFlow Pro
 
