@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -8,6 +8,17 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const savedEmail = sessionStorage.getItem('registeredEmail');
+    const savedPassword = sessionStorage.getItem('registeredPassword');
+    if (savedEmail && savedPassword) {
+      setEmail(savedEmail);
+      setPassword(savedPassword);
+      sessionStorage.removeItem('registeredEmail');
+      sessionStorage.removeItem('registeredPassword');
+    }
+  }, []);
 
   const submit = async (e: any) => {
     e.preventDefault();
@@ -40,8 +51,8 @@ export default function LoginPage() {
         
         <form onSubmit={submit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1 relative">Email</label>
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="you@example.com" className="w-full text-white px-4 py-2 rounded-lg bg-background border border-white/10 focus:border-primary focus:outline-none transition-colors" />
+            <label className="block text-sm font-medium mb-1 relative">Email or Username</label>
+            <input type="text" value={email} onChange={e => setEmail(e.target.value)} required placeholder="you@example.com or username" className="w-full text-white px-4 py-2 rounded-lg bg-background border border-white/10 focus:border-primary focus:outline-none transition-colors" />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Password</label>
