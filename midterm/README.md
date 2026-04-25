@@ -3,6 +3,13 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 Open https://github-ji8l.vercel.app/ to see the result.
 
+
+SIGN IN: For admin: email:"admin@gmail.com", password: "123456"
+
+  For moderator: email: "moderate@gmail.com", password: "12345".
+
+  For client: email: "user@gmail.com", password: "12345".
+
 # 🚀 AdFlow Pro
 
 AdFlow Pro is a modern web-based sponsored listing marketplace designed to manage and streamline the advertisement posting process. It provides a structured workflow where ads are submitted, reviewed, and published through role-based access.
@@ -62,17 +69,25 @@ The main objective of AdFlow Pro is to provide a secure and efficient platform f
 AdFlow Pro is a complete solution for managing sponsored listings. It demonstrates real-world concepts such as authentication, role management, and workflow automation using modern web technologies.
 
 ---
+<img width="1889" height="892" alt="image" src="https://github.com/user-attachments/assets/d836f86a-29bf-4f20-8887-70f1999143a7" />
 
 
+<img width="1885" height="873" alt="image" src="https://github.com/user-attachments/assets/24915428-8336-49b8-ba92-eb70278ba426" />
 
-<img width="1913" height="902" alt="s1" src="https://github.com/user-attachments/assets/6f44299b-7a7b-4911-b5f2-6ab8a2371a3d" />
-<img width="1917" height="905" alt="s7" src="https://github.com/user-attachments/assets/c3861a76-a70d-4c8a-a0ec-2d6f4b0c1c1c" />
+<img width="1910" height="907" alt="image" src="https://github.com/user-attachments/assets/b08a21b5-6786-43a9-8d13-88ac2dfd5a47" />
 
-<img width="1897" height="917" alt="s2" src="https://github.com/user-attachments/assets/d4148270-7793-4877-9621-5a9b2d39b600" />
-<img width="1906" height="907" alt="s3" src="https://github.com/user-attachments/assets/1f37c24a-639f-422f-93b4-ac46d4cf3014" /><img width="1917" height="917" alt="s5" src="https://github.com/user-attachments/assets/22e0efa2-455b-41a9-8db6-83900568406c" />
-<img width="1901" height="975" alt="s6" src="https://github.com/user-attachments/assets/fdd1197d-3df5-4721-84e6-b7e51ed621e4" />
-<img width="1917" height="905" alt="s7" src="https://github.com/user-attachments/assets/8d7a35ba-8b3e-43e0-b5be-c2ab1<img width="1918" height="890" alt="s8" src="https://github.com/user-attachments/assets/99edc2c5-a701-4ada-bc54-f6f504e7af23" />
-568bf6b" />
+<img width="1919" height="906" alt="image" src="https://github.com/user-attachments/assets/50901411-f7de-419a-b627-f4446a633f1b" />
+
+<img width="1899" height="910" alt="image" src="https://github.com/user-attachments/assets/07f23661-c041-41de-8cc2-6344e41bb2d0" />
+
+<img width="1919" height="879" alt="image" src="https://github.com/user-attachments/assets/7096af31-83ca-4ced-9078-7255c1712b5f" />
+
+<img width="1914" height="902" alt="image" src="https://github.com/user-attachments/assets/b5007b00-734e-4c62-a6c4-200ed7d14932" />
+
+<img width="1914" height="907" alt="image" src="https://github.com/user-attachments/assets/7fdc54d1-dd0c-4794-b962-f58b295a0790" />
+
+<img width="1897" height="920" alt="image" src="https://github.com/user-attachments/assets/7bf1e556-7e7e-4613-8175-80c3736eccfa" />
+
 
 
 
