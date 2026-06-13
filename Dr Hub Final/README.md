@@ -2,6 +2,8 @@
 
 A full-stack, production-ready system for doctor-patient consultation, appointment booking, and immutable medical history management.
 
+## Live Link: https://dorctor-hub.vercel.app
+
 ## Prerequisites
 - Node.js (v16+)
 - MySQL Server
