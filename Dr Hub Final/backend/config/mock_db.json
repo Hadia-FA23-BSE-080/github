@@ -1,0 +1,414 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "Dr. Sarah Ahmed",
+      "email": "sarah@doctorhub.com",
+      "password": "$2b$10$fJ/A1lJ43nL5/wB1B4N1M.9.m6.S55S3eO608Y52N0Bv0D1rV0y",
+      "role": "doctor",
+      "phone": "03001234567"
+    },
+    {
+      "id": 2,
+      "name": "Dr. Bilal Khan",
+      "email": "bilal@doctorhub.com",
+      "password": "$2b$10$fJ/A1lJ43nL5/wB1B4N1M.9.m6.S55S3eO608Y52N0Bv0D1rV0y",
+      "role": "doctor",
+      "phone": "03001234568"
+    },
+    {
+      "id": 3,
+      "name": "Hakeem Luqman Chishti",
+      "email": "luqman@doctorhub.com",
+      "password": "$2b$10$fJ/A1lJ43nL5/wB1B4N1M.9.m6.S55S3eO608Y52N0Bv0D1rV0y",
+      "role": "doctor",
+      "phone": "03001234569"
+    },
+    {
+      "id": 4,
+      "name": "John Doe",
+      "email": "john@example.com",
+      "password": "$2b$10$fJ/A1lJ43nL5/wB1B4N1M.9.m6.S55S3eO608Y52N0Bv0D1rV0y",
+      "role": "patient",
+      "phone": "03001234570"
+    },
+    {
+      "id": 5,
+      "name": "Jane Doe",
+      "email": "jane@example.com",
+      "password": "$2b$10$fJ/A1lJ43nL5/wB1B4N1M.9.m6.S55S3eO608Y52N0Bv0D1rV0y",
+      "role": "patient",
+      "phone": "03001234571"
+    },
+    {
+      "id": 6,
+      "name": "Assistant Ali",
+      "email": "ali@doctorhub.com",
+      "password": "$2b$10$fJ/A1lJ43nL5/wB1B4N1M.9.m6.S55S3eO608Y52N0Bv0D1rV0y",
+      "role": "assistant",
+      "phone": "03001234572"
+    },
+    {
+      "id": 7,
+      "name": "Ahmad Hassan",
+      "email": "ahmad@example.com",
+      "password": "$2b$10$fJ/A1lJ43nL5/wB1B4N1M.9.m6.S55S3eO608Y52N0Bv0D1rV0y",
+      "role": "patient",
+      "phone": "03112223344"
+    },
+    {
+      "id": 8,
+      "name": "Hadia Ahmad",
+      "email": "hadia@example.com",
+      "password": "$2b$10$fJ/A1lJ43nL5/wB1B4N1M.9.m6.S55S3eO608Y52N0Bv0D1rV0y",
+      "role": "patient",
+      "phone": "03259005731"
+    },
+    {
+      "id": 11,
+      "name": "Muhammad Ali",
+      "email": "muhammad@example.com",
+      "password": "$2b$10$fJ/A1lJ43nL5/wB1B4N1M.9.m6.S55S3eO608Y52N0Bv0D1rV0y",
+      "role": "patient",
+      "phone": "03335556677"
+    },
+    {
+      "id": 12,
+      "name": "Assistant Fatima",
+      "email": "fatima@doctorhub.com",
+      "password": "$2b$10$fJ/A1lJ43nL5/wB1B4N1M.9.m6.S55S3eO608Y52N0Bv0D1rV0y",
+      "role": "assistant",
+      "phone": "03007654321"
+    },
+    {
+      "id": 13,
+      "name": "Admin User",
+      "email": "admin@doctorhub.com",
+      "password": "$2b$10$fJ/A1lJ43nL5/wB1B4N1M.9.m6.S55S3eO608Y52N0Bv0D1rV0y",
+      "role": "admin",
+      "phone": "03001234573"
+    },
+    {
+      "id": 14,
+      "name": "Super Admin",
+      "email": "superadmin@doctorhub.com",
+      "password": "$2b$10$fJ/A1lJ43nL5/wB1B4N1M.9.m6.S55S3eO608Y52N0Bv0D1rV0y",
+      "role": "superadmin",
+      "phone": "03001234574"
+    }
+  ],
+  "doctors": [
+    {
+      "id": 1,
+      "user_id": 1,
+      "specialization": "Cardiologist",
+      "treatment_type": "allopathic",
+      "license_no": "LIC-123",
+      "experience_years": 12,
+      "fee": 2000,
+      "bio": "Experienced cardiologist who specializes in treating cardiovascular conditions."
+    },
+    {
+      "id": 2,
+      "user_id": 2,
+      "specialization": "Pediatrician",
+      "treatment_type": "homeopathic",
+      "license_no": "LIC-124",
+      "experience_years": 8,
+      "fee": 1500,
+      "bio": "Child specialist providing natural homeopathic treatments for young kids."
+    },
+    {
+      "id": 3,
+      "user_id": 3,
+      "specialization": "Herbalist",
+      "treatment_type": "herbal",
+      "license_no": "LIC-125",
+      "experience_years": 20,
+      "fee": 1000,
+      "bio": "Natural remedies expert focusing on holistic wellness using herbal solutions."
+    }
+  ],
+  "patients": [
+    {
+      "id": 1,
+      "user_id": 4,
+      "date_of_birth": "1990-01-01",
+      "blood_group": "O+",
+      "allergies": "Peanuts"
+    },
+    {
+      "id": 2,
+      "user_id": 5,
+      "date_of_birth": "1995-05-05",
+      "blood_group": "A-",
+      "allergies": "Dust"
+    },
+    {
+      "id": 3,
+      "user_id": 7,
+      "date_of_birth": "1988-10-12",
+      "blood_group": "B+",
+      "allergies": "None"
+    },
+    {
+      "id": 4,
+      "user_id": 8,
+      "date_of_birth": "1992-04-20",
+      "blood_group": "AB+",
+      "allergies": "Pollen"
+    },
+    {
+      "id": 5,
+      "user_id": 11,
+      "date_of_birth": "1997-08-15",
+      "blood_group": "O-",
+      "allergies": "Penicillin"
+    }
+  ],
+  "clinics": [
+    {
+      "id": 1,
+      "doctor_id": 1,
+      "name": "Heart Care Center",
+      "address": "123 Main St",
+      "city": "Karachi",
+      "timings_json": {
+        "mon": "10:00-14:00",
+        "wed": "10:00-14:00"
+      }
+    },
+    {
+      "id": 2,
+      "doctor_id": 2,
+      "name": "Kids Cure Clinic",
+      "address": "456 Elm St",
+      "city": "Lahore",
+      "timings_json": {
+        "tue": "15:00-18:00",
+        "thu": "15:00-18:00"
+      }
+    },
+    {
+      "id": 3,
+      "doctor_id": 3,
+      "name": "Natural Healing Clinic",
+      "address": "789 Oak St",
+      "city": "Islamabad",
+      "timings_json": {
+        "fri": "16:00-20:00"
+      }
+    }
+  ],
+  "appointments": [
+    {
+      "id": 1,
+      "patient_id": 1,
+      "doctor_id": 1,
+      "clinic_id": 1,
+      "date": "2026-06-12",
+      "time_slot": "10:00 AM",
+      "status": "completed",
+      "payment_status": "verified"
+    },
+    {
+      "id": 2,
+      "patient_id": 2,
+      "doctor_id": 1,
+      "clinic_id": 1,
+      "date": "2026-06-13",
+      "time_slot": "11:30 AM",
+      "status": "confirmed",
+      "payment_status": "verified"
+    },
+    {
+      "id": 3,
+      "patient_id": 1,
+      "doctor_id": 2,
+      "clinic_id": 2,
+      "date": "2026-06-14",
+      "time_slot": "02:00 PM",
+      "status": "completed",
+      "payment_status": "verified"
+    },
+    {
+      "id": 4,
+      "patient_id": 3,
+      "doctor_id": 3,
+      "clinic_id": 3,
+      "date": "2026-06-15",
+      "time_slot": "10:00 AM",
+      "status": "completed",
+      "payment_status": "verified"
+    },
+    {
+      "id": 5,
+      "patient_id": 4,
+      "doctor_id": 1,
+      "clinic_id": 1,
+      "date": "2026-06-16",
+      "time_slot": "11:30 AM",
+      "status": "confirmed",
+      "payment_status": "pending"
+    },
+    {
+      "id": 6,
+      "patient_id": 5,
+      "doctor_id": 2,
+      "clinic_id": 2,
+      "date": "2026-06-17",
+      "time_slot": "02:00 PM",
+      "status": "completed",
+      "payment_status": "verified"
+    }
+  ],
+  "payments": [
+    {
+      "id": 1,
+      "appointment_id": 1,
+      "amount": 2000,
+      "screenshot_url": "/uploads/screenshot1.png",
+      "status": "verified",
+      "verified_by": 6,
+      "verified_at": "2026-06-11T10:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "appointment_id": 2,
+      "amount": 2000,
+      "screenshot_url": "/uploads/screenshot2.png",
+      "status": "verified",
+      "verified_by": 6,
+      "verified_at": "2026-06-12T09:00:00.000Z"
+    },
+    {
+      "id": 3,
+      "appointment_id": 3,
+      "amount": 1500,
+      "screenshot_url": "/uploads/screenshot3.png",
+      "status": "verified",
+      "verified_by": 6,
+      "verified_at": "2026-06-13T09:00:00.000Z"
+    },
+    {
+      "id": 4,
+      "appointment_id": 4,
+      "amount": 1000,
+      "screenshot_url": "/uploads/screenshot4.png",
+      "status": "verified",
+      "verified_by": 6,
+      "verified_at": "2026-06-14T09:00:00.000Z"
+    },
+    {
+      "id": 6,
+      "appointment_id": 6,
+      "amount": 1500,
+      "screenshot_url": "/uploads/screenshot6.png",
+      "status": "verified",
+      "verified_by": 6,
+      "verified_at": "2026-06-16T09:00:00.000Z"
+    }
+  ],
+  "medical_history": [
+    {
+      "id": 1,
+      "patient_id": 1,
+      "doctor_id": 2,
+      "appointment_id": 3,
+      "symptoms": "Persistent dry cough, mild fever, chest congestion for 3 days.",
+      "diagnosis": "Acute Bronchitis",
+      "notes": "Advised bed rest for 3 days. Avoid cold drinks.",
+      "created_at": "2026-06-13T10:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "patient_id": 2,
+      "doctor_id": 1,
+      "appointment_id": 2,
+      "symptoms": "High blood pressure, occasional chest tightness, palpitations.",
+      "diagnosis": "Stage 1 Hypertension",
+      "notes": "Reduce daily sodium intake, walk 30 mins, monitor blood pressure weekly.",
+      "created_at": "2026-06-13T11:00:00.000Z"
+    },
+    {
+      "id": 3,
+      "patient_id": 3,
+      "doctor_id": 3,
+      "appointment_id": 4,
+      "symptoms": "Chronic indigestion and stomach acidity after heavy meals.",
+      "diagnosis": "Acid Peptic Disease",
+      "notes": "Take herbal tea before meals. Avoid spicy and fried foods.",
+      "created_at": "2026-06-14T10:00:00.000Z"
+    },
+    {
+      "id": 4,
+      "patient_id": 5,
+      "doctor_id": 2,
+      "appointment_id": 6,
+      "symptoms": "Seasonal allergies, skin hives, persistent sneezing.",
+      "diagnosis": "Allergic Rhinitis",
+      "notes": "Avoid dust exposure, use steam inhalation, keep surroundings clean.",
+      "created_at": "2026-06-16T10:00:00.000Z"
+    }
+  ],
+  "prescriptions": [
+    {
+      "id": 1,
+      "medical_history_id": 1,
+      "medicine_name": "Amoxicillin 500mg",
+      "dosage": "1-0-1",
+      "duration": "5 days",
+      "instructions": "Take after meals",
+      "created_at": "2026-06-13T10:02:00.000Z"
+    },
+    {
+      "id": 2,
+      "medical_history_id": 1,
+      "medicine_name": "Cough Syrup (Hydryllin)",
+      "dosage": "2 teaspoons thrice a day",
+      "duration": "3 days",
+      "instructions": "Drink warm water after intake",
+      "created_at": "2026-06-13T10:03:00.000Z"
+    },
+    {
+      "id": 3,
+      "medical_history_id": 2,
+      "medicine_name": "Lisinopril 10mg",
+      "dosage": "1-0-0",
+      "duration": "30 days",
+      "instructions": "Take in morning before breakfast",
+      "created_at": "2026-06-13T11:02:00.000Z"
+    },
+    {
+      "id": 4,
+      "medical_history_id": 3,
+      "medicine_name": "Sufoof-e-Hazim",
+      "dosage": "1 teaspoon after meals",
+      "duration": "15 days",
+      "instructions": "Mix in lukewarm water",
+      "created_at": "2026-06-14T10:02:00.000Z"
+    },
+    {
+      "id": 5,
+      "medical_history_id": 4,
+      "medicine_name": "Loratadine 10mg",
+      "dosage": "0-0-1",
+      "duration": "10 days",
+      "instructions": "Take before sleeping",
+      "created_at": "2026-06-16T10:02:00.000Z"
+    }
+  ],
+  "assistants": [
+    {
+      "id": 1,
+      "user_id": 6,
+      "doctor_id": 1
+    },
+    {
+      "id": 2,
+      "user_id": 12,
+      "doctor_id": 2
+    }
+  ],
+  "messages": []
+}
