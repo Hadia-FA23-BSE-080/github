@@ -66,3 +66,5 @@ Task 1/
 ---
 
 > **Status:** ✅ Running & Working
+Project Screenshot:
+> <img width="1918" height="887" alt="image" src="https://github.com/user-attachments/assets/7a99cd56-92cc-440d-8149-306dc37d0960" />
