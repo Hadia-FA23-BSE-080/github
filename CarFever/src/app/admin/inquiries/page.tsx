@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { createServerClient } from "@/lib/supabase/server";
+import { createClient } from "../../../lib/supabase/client";
 import { updateInquiryStatus, deleteInquiry, markAllInquiriesRead, clearAllInquiries } from "@/lib/admin-actions";
 import { toast } from "sonner";
 
@@ -50,12 +50,12 @@ export default function AdminInquiriesPage() {
   useEffect(() => {
     const fetchInquiries = async () => {
       try {
-        const supabase = createServerClient();
+        const supabase = createClient();
         const { data, error } = await supabase
           .from('inquiries')
           .select('*')
           .order('created_at', { ascending: false });
-        
+
         if (error) throw error;
         setInquiries(data || []);
       } catch (error) {
@@ -65,7 +65,7 @@ export default function AdminInquiriesPage() {
         setLoading(false);
       }
     };
-    
+
     fetchInquiries();
   }, []);
 
@@ -129,7 +129,7 @@ export default function AdminInquiriesPage() {
       const matchesSearch =
         inq.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         inq.email.toLowerCase().includes(searchQuery.toLowerCase());
-      
+
       const matchesFilter =
         statusFilter === "All" ||
         (statusFilter === "Unread" && !inq.is_read) ||
@@ -143,7 +143,7 @@ export default function AdminInquiriesPage() {
   const stats = useMemo(() => {
     const total = inquiries.length;
     const unread = inquiries.filter((i) => !i.is_read).length;
-    
+
     // Count inquiries from this week (last 7 days)
     const sevenDaysAgo = Date.now() - 7 * 86400000;
     const thisWeek = inquiries.filter((i) => new Date(i.created_at).getTime() > sevenDaysAgo).length;
@@ -174,7 +174,7 @@ export default function AdminInquiriesPage() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      
+
       {/* Header */}
       <div>
         <h2 className="text-3xl font-extrabold text-white tracking-tight">Contact Inquiries</h2>
@@ -298,9 +298,8 @@ export default function AdminInquiriesPage() {
                 {filteredInquiries.map((inq) => (
                   <tr
                     key={inq.id}
-                    className={`hover:bg-white/[0.02] transition-colors ${
-                      !inq.is_read ? "bg-white/[0.01]" : ""
-                    }`}
+                    className={`hover:bg-white/[0.02] transition-colors ${!inq.is_read ? "bg-white/[0.01]" : ""
+                      }`}
                   >
                     {/* Status Dot */}
                     <td className="pl-5 py-4">
@@ -342,11 +341,10 @@ export default function AdminInquiriesPage() {
                         </button>
                         <button
                           onClick={() => markAsRead(inq.id, !inq.is_read)}
-                          className={`p-2 rounded-lg border transition-all ${
-                            !inq.is_read
+                          className={`p-2 rounded-lg border transition-all ${!inq.is_read
                               ? "bg-electric-blue/10 border-electric-blue/20 text-electric-blue hover:bg-electric-blue hover:text-white"
                               : "bg-white/5 border-white/10 text-zinc-500 hover:text-zinc-300 hover:bg-white/10"
-                          }`}
+                            }`}
                           title={!inq.is_read ? "Mark as Read" : "Mark as Unread"}
                         >
                           <Check className="w-4 h-4" />
@@ -371,9 +369,8 @@ export default function AdminInquiriesPage() {
             {filteredInquiries.map((inq) => (
               <div
                 key={inq.id}
-                className={`bg-zinc-900 border rounded-2xl p-4 space-y-3 ${
-                  !inq.is_read ? "border-electric-blue/40" : "border-white/10"
-                }`}
+                className={`bg-zinc-900 border rounded-2xl p-4 space-y-3 ${!inq.is_read ? "border-electric-blue/40" : "border-white/10"
+                  }`}
               >
                 <div className="flex justify-between items-start">
                   <div>
