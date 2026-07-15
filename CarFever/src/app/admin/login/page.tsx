@@ -3,122 +3,122 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Car, Lock, Mail, AlertCircle, ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [email,     setEmail]     = useState("");
+  const [password,  setPassword]  = useState("");
+  const [error,     setError]     = useState<string | null>(null);
+  const [loading,   setLoading]   = useState(false);
 
-  // If already logged in, redirect to dashboard
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const user = localStorage.getItem("cf_admin_user");
-      if (user) {
-        router.push("/admin/dashboard");
-      }
-    }
+    const user = localStorage.getItem("cf_admin_user");
+    if (user) router.push("/admin/dashboard");
   }, [router]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setIsLoading(true);
-
-    // Simulate small latency for premium feel
+    setLoading(true);
     setTimeout(() => {
       if (email === "admin@carfever.com" && password === "admin123") {
-        localStorage.setItem("cf_admin_user", JSON.stringify({ email, role: "admin", loggedAt: new Date().toISOString() }));
+        localStorage.setItem("cf_admin_user", JSON.stringify({
+          name: "Admin User",
+          email,
+          role: "admin",
+          loggedAt: new Date().toISOString(),
+        }));
         router.push("/admin/dashboard");
       } else {
-        setError("Invalid admin email or password. Please try again.");
-        setIsLoading(false);
+        setError("Invalid email or password. Use admin@carfever.com / admin123");
+        setLoading(false);
       }
-    }, 1000);
+    }, 900);
   };
 
   return (
-    <div className="relative min-h-screen bg-zinc-950 flex flex-col justify-center items-center px-4 overflow-hidden">
-      {/* Background radial effects */}
-      <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-neon-red/10 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full bg-electric-blue/10 blur-[120px] pointer-events-none" />
+    <div style={{ minHeight: "100vh", background: "#0f0f0f", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 16, position: "relative", overflow: "hidden" }}>
+      {/* Glow blobs */}
+      <div style={{ position: "absolute", top: "-15%", left: "-10%", width: 500, height: 500, borderRadius: "50%", background: "rgba(0,85,254,0.08)", filter: "blur(100px)", pointerEvents: "none" }} />
+      <div style={{ position: "absolute", bottom: "-15%", right: "-10%", width: 500, height: 500, borderRadius: "50%", background: "rgba(0,182,122,0.06)", filter: "blur(100px)", pointerEvents: "none" }} />
 
-      {/* Main Login Card */}
-      <div className="w-full max-w-md glass-heavy border border-white/10 rounded-3xl p-8 shadow-2xl relative z-10 animate-in zoom-in-95 duration-300">
-        
-        {/* Branding header */}
-        <div className="text-center mb-8">
-          <div className="w-14 h-14 rounded-2xl bg-neon-red flex items-center justify-center mx-auto mb-4 glow-red-subtle">
-            <Car className="w-7 h-7 text-white" />
+      {/* Card */}
+      <div style={{ width: "100%", maxWidth: 420, background: "#141414", border: "1px solid #222", borderRadius: 24, padding: 36, boxShadow: "0 40px 80px rgba(0,0,0,0.6)", position: "relative", zIndex: 10 }}>
+
+        {/* Brand */}
+        <div style={{ textAlign: "center", marginBottom: 32 }}>
+          <div style={{ width: 56, height: 56, borderRadius: 16, background: "#0055FE", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+            <Car style={{ width: 28, height: 28, color: "#fff" }} />
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">
-            Car<span className="text-neon-red">Fever</span> Control Center
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: "#fff", margin: 0 }}>
+            Car<span style={{ color: "#0055FE" }}>Fever</span> Admin
           </h1>
-          <p className="text-sm text-zinc-400 mt-1.5">
-            Sign in to access admin console
-          </p>
+          <p style={{ fontSize: 13, color: "#555", marginTop: 6 }}>Sign in to access your control panel</p>
         </div>
 
-        {/* Error notification */}
+        {/* Demo credentials hint */}
+        <div style={{ background: "rgba(0,85,254,0.08)", border: "1px solid rgba(0,85,254,0.2)", borderRadius: 10, padding: "10px 14px", marginBottom: 20, fontSize: 11, color: "#6b9fff", lineHeight: 1.6 }}>
+          <strong>Demo credentials:</strong><br />
+          Email: admin@carfever.com<br />
+          Password: admin123
+        </div>
+
+        {/* Error */}
         {error && (
-          <div className="flex items-center gap-2.5 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 mb-6 animate-in fade-in duration-200">
-            <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
-            <span className="text-sm text-red-400">{error}</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: 10, padding: "10px 14px", marginBottom: 20 }}>
+            <AlertCircle style={{ width: 16, height: 16, color: "#ef4444", flexShrink: 0 }} />
+            <span style={{ fontSize: 13, color: "#f87171" }}>{error}</span>
           </div>
         )}
 
-        {/* Login Form */}
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
-              Admin Email
-            </label>
-            <div className="relative">
-              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-zinc-500" />
+        {/* Form */}
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "#555", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>Email</label>
+            <div style={{ position: "relative" }}>
+              <Mail style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", width: 16, height: 16, color: "#444" }} />
               <input
                 type="email"
-                placeholder="admin@carfever.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="admin@carfever.com"
                 required
-                className="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-neon-red transition-all text-sm"
+                style={{ width: "100%", paddingLeft: 42, paddingRight: 14, paddingTop: 12, paddingBottom: 12, background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, color: "#fff", fontSize: 13, outline: "none", boxSizing: "border-box" }}
+                onFocus={e => (e.target.style.borderColor = "#0055FE")}
+                onBlur={e => (e.target.style.borderColor = "#2a2a2a")}
               />
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
-              Password
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-zinc-500" />
+          <div style={{ marginBottom: 24 }}>
+            <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "#555", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>Password</label>
+            <div style={{ position: "relative" }}>
+              <Lock style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", width: 16, height: 16, color: "#444" }} />
               <input
                 type="password"
-                placeholder="••••••••"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="••••••••"
                 required
-                className="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-neon-red transition-all text-sm"
+                style={{ width: "100%", paddingLeft: 42, paddingRight: 14, paddingTop: 12, paddingBottom: 12, background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, color: "#fff", fontSize: 13, outline: "none", boxSizing: "border-box" }}
+                onFocus={e => (e.target.style.borderColor = "#0055FE")}
+                onBlur={e => (e.target.style.borderColor = "#2a2a2a")}
               />
             </div>
           </div>
 
-          <Button
+          <button
             type="submit"
-            disabled={isLoading}
-            className="w-full bg-neon-red hover:bg-red-600 text-white font-bold h-12 mt-3 glow-red-subtle hover:glow-red transition-all duration-300 flex items-center justify-center gap-2"
+            disabled={loading}
+            style={{ width: "100%", height: 48, background: loading ? "#333" : "#0055FE", color: "#fff", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "background 0.2s" }}
           >
-            {isLoading ? "Authenticating..." : "Access Dashboard"}
-            {!isLoading && <ArrowRight className="w-4 h-4" />}
-          </Button>
+            {loading ? "Authenticating…" : <>Access Dashboard <ArrowRight style={{ width: 16, height: 16 }} /></>}
+          </button>
         </form>
       </div>
 
-      {/* Footer Branding */}
-      <div className="mt-8 text-center text-xs text-zinc-500 tracking-wider uppercase">
-        Car Fever Admin v1.0
+      <div style={{ marginTop: 24, fontSize: 11, color: "#333", letterSpacing: "0.12em", textTransform: "uppercase" }}>
+        Car Fever Admin Console v1.0
       </div>
     </div>
   );

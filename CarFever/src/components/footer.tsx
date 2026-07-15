@@ -59,54 +59,51 @@ const socialLinks = [
 
 export function Footer() {
   return (
-    <footer className="relative border-t border-white/[0.06]">
-      {/* Top accent */}
-      <div className="h-[1px] w-full bg-gradient-to-r from-transparent via-neon-red/30 to-transparent" />
-
+    <footer className="relative border-t border-gray-200 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Main Footer */}
-        <div className="py-14 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
+        <div className="py-12 sm:py-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 sm:gap-10">
           {/* Brand Column */}
-          <div className="lg:col-span-2">
-            <Link href="/" className="inline-flex items-center gap-2.5 mb-5">
-              <div className="w-9 h-9 rounded-lg bg-neon-red flex items-center justify-center">
+          <div className="flex flex-col items-center text-center lg:items-start lg:text-left sm:col-span-2">
+            <Link href="/" className="inline-flex items-center gap-2.5 mb-4 sm:mb-5">
+              <div className="w-9 h-9 rounded-lg bg-[#0055FE] flex items-center justify-center">
                 <Car className="w-5 h-5 text-white" />
               </div>
               <div className="flex flex-col">
-                <span className="text-lg font-bold text-white leading-none">
-                  Car<span className="text-neon-red">Fever</span>
+                <span className="text-lg font-bold text-gray-900 leading-none">
+                  Car<span className="text-[#0055FE]">Fever</span>
                 </span>
-                <span className="text-[10px] text-zinc-500 tracking-[0.2em] uppercase leading-none mt-0.5">
+                <span className="text-[10px] text-gray-500 tracking-[0.2em] uppercase leading-none mt-0.5">
                   Marketplace
                 </span>
               </div>
             </Link>
-            <p className="text-sm text-zinc-400 max-w-sm mb-6 leading-relaxed">
+            <p className="text-xs sm:text-sm text-gray-600 max-w-sm mb-6 leading-relaxed">
               Pakistan&apos;s most trusted automotive marketplace. Find your dream
               car with verified listings, professional inspections, and
               transparent pricing.
             </p>
 
             {/* Contact Info */}
-            <div className="space-y-2.5">
+            <div className="flex flex-col items-center lg:items-start space-y-2.5">
               <a
                 href="tel:+921234567890"
-                className="flex items-center gap-2.5 text-sm text-zinc-400 hover:text-white transition-colors"
+                className="flex items-center gap-2.5 text-xs sm:text-sm text-gray-600 hover:text-[#0055FE] transition-colors min-h-[44px] sm:min-h-0"
                 suppressHydrationWarning
               >
-                <Phone className="w-4 h-4 text-neon-red" />
+                <Phone className="w-4 h-4 text-[#0055FE]" />
                 +92 123 456 7890
               </a>
               <a
                 href="mailto:info@carfever.pk"
-                className="flex items-center gap-2.5 text-sm text-zinc-400 hover:text-white transition-colors"
+                className="flex items-center gap-2.5 text-xs sm:text-sm text-gray-600 hover:text-[#0055FE] transition-colors min-h-[44px] sm:min-h-0"
                 suppressHydrationWarning
               >
-                <Mail className="w-4 h-4 text-electric-blue" />
+                <Mail className="w-4 h-4 text-[#0055FE]" />
                 info@carfever.pk
               </a>
-              <div className="flex items-center gap-2.5 text-sm text-zinc-400">
-                <MapPin className="w-4 h-4 text-neon-red" />
+              <div className="flex items-center gap-2.5 text-xs sm:text-sm text-gray-600">
+                <MapPin className="w-4 h-4 text-[#0055FE]" />
                 Lahore, Pakistan
               </div>
             </div>
@@ -114,8 +111,8 @@ export function Footer() {
 
           {/* Link Columns */}
           {Object.entries(footerLinks).map(([title, links]) => (
-            <div key={title}>
-              <h3 className="text-sm font-semibold text-white mb-4 uppercase tracking-wider">
+            <div key={title} className="flex flex-col items-center text-center lg:items-start lg:text-left">
+              <h3 className="text-xs sm:text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wider">
                 {title}
               </h3>
               <ul className="space-y-2.5">
@@ -123,7 +120,7 @@ export function Footer() {
                   <li key={link.label}>
                     <Link
                       href={link.href}
-                      className="text-sm text-zinc-400 hover:text-white transition-colors duration-200"
+                      className="text-xs sm:text-sm text-gray-600 hover:text-[#0055FE] transition-colors duration-200 block py-1.5 sm:py-0"
                     >
                       {link.label}
                     </Link>
@@ -135,8 +132,8 @@ export function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="py-6 border-t border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-zinc-500">
+        <div className="py-6 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-xs text-gray-500 text-center sm:text-left">
             © {new Date().getFullYear()} Car Fever. All rights reserved.
           </p>
 
@@ -149,7 +146,7 @@ export function Footer() {
                   key={social.label}
                   href={social.href}
                   aria-label={social.label}
-                  className="p-2 rounded-lg text-zinc-500 hover:text-white hover:bg-white/5 transition-all duration-200"
+                  className="p-2.5 rounded-lg text-gray-400 hover:text-[#0055FE] hover:bg-gray-100 transition-all duration-200 min-h-[44px] min-w-[44px] flex items-center justify-center"
                 >
                   <Icon />
                 </a>

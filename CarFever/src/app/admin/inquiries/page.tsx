@@ -17,73 +17,25 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { createServerClient } from "@/lib/supabase/server";
+import { updateInquiryStatus, deleteInquiry, markAllInquiriesRead, clearAllInquiries } from "@/lib/admin-actions";
+import { toast } from "sonner";
 
 interface Inquiry {
   id: string;
   name: string;
   email: string;
-  phone: string;
+  phone: string | null;
   subject: string;
   message: string;
-  date: string; // ISO string
-  read: boolean;
+  created_at: string;
+  is_read: boolean;
+  status: 'pending' | 'read' | 'replied' | 'archived';
 }
-
-const SAMPLE_INQUIRIES: Inquiry[] = [
-  {
-    id: "INQ-901",
-    name: "Zeeshan Ahmed",
-    email: "zeeshan.ahmed@gmail.com",
-    phone: "+92 300 8765432",
-    subject: "Civic RS Negotiation",
-    message: "Assalam o Alaikum, is the price of Honda Civic RS Turbo negotiable? I am planning to inspect the car this weekend. Please coordinate with the owner and let me know.",
-    date: new Date(Date.now() - 3600000 * 4).toISOString(), // 4 hours ago
-    read: false,
-  },
-  {
-    id: "INQ-902",
-    name: "Hina Parveen",
-    email: "hina.parveen@outlook.com",
-    phone: "+92 321 4567890",
-    subject: "Premium Inspection Query",
-    message: "Hi, I would like to book a premium inspection service for a Suzuki Swift in Lahore DHA Phase 6. Can you confirm if your inspectors are available on Sunday afternoon?",
-    date: new Date(Date.now() - 3600000 * 18).toISOString(), // 18 hours ago
-    read: false,
-  },
-  {
-    id: "INQ-903",
-    name: "Kamran Malik",
-    email: "kamran.malik@hotmail.com",
-    phone: "+92 333 5566778",
-    subject: "Listing Image Upload Issue",
-    message: "I am trying to upload pictures for my Toyota Fortuner listing but the page shows a warning. The images are below 5MB. Can you help me post the listing manually?",
-    date: new Date(Date.now() - 3600000 * 30).toISOString(), // 30 hours ago
-    read: true,
-  },
-  {
-    id: "INQ-904",
-    name: "Ayesha Bibi",
-    email: "ayesha.bibi@yahoo.com",
-    phone: "+92 312 3344556",
-    subject: "Marketplace Listing Charges",
-    message: "Are there any service charges or hidden commission fees for selling a car through Car Fever marketplace? I want to list my KIA Sportage.",
-    date: new Date(Date.now() - 86400000 * 3).toISOString(), // 3 days ago
-    read: true,
-  },
-  {
-    id: "INQ-905",
-    name: "Muhammad Rizwan",
-    email: "rizwan.m@gmail.com",
-    phone: "+92 345 6677889",
-    subject: "Unresponsive Seller Complaint",
-    message: "A seller named Ali Hassan is not responding to my offers on his Altis Grande. Can you check if the car is already sold or if the listing is inactive?",
-    date: new Date(Date.now() - 86400000 * 6).toISOString(), // 6 days ago
-    read: true,
-  },
-];
 
 export default function AdminInquiriesPage() {
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"All" | "Unread" | "Read">("All");
 
@@ -94,62 +46,81 @@ export default function AdminInquiriesPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null);
   const [clearAllConfirm, setClearAllConfirm] = useState(false);
 
-  // Load from localStorage
+  // Fetch from Supabase
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("cf_inquiries");
-      if (stored) {
-        try {
-          setInquiries(JSON.parse(stored));
-        } catch {
-          setInquiries(SAMPLE_INQUIRIES);
-          localStorage.setItem("cf_inquiries", JSON.stringify(SAMPLE_INQUIRIES));
-        }
-      } else {
-        setInquiries(SAMPLE_INQUIRIES);
-        localStorage.setItem("cf_inquiries", JSON.stringify(SAMPLE_INQUIRIES));
+    const fetchInquiries = async () => {
+      try {
+        const supabase = createServerClient();
+        const { data, error } = await supabase
+          .from('inquiries')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        setInquiries(data || []);
+      } catch (error) {
+        console.error('Failed to fetch inquiries:', error);
+        toast.error('Failed to load inquiries');
+      } finally {
+        setLoading(false);
       }
-    }
+    };
+    
+    fetchInquiries();
   }, []);
 
-  // Save to localStorage helper
-  const saveToStorage = (updatedList: Inquiry[]) => {
-    setInquiries(updatedList);
-    localStorage.setItem("cf_inquiries", JSON.stringify(updatedList));
-  };
-
   // Mark single as read
-  const markAsRead = (id: string, readState: boolean = true) => {
-    const updated = inquiries.map((inq) =>
-      inq.id === id ? { ...inq, read: readState } : inq
-    );
-    saveToStorage(updated);
-    if (selectedInquiry && selectedInquiry.id === id) {
-      setSelectedInquiry({ ...selectedInquiry, read: readState });
+  const markAsRead = async (id: string, readState: boolean = true) => {
+    try {
+      const status = readState ? 'read' : 'pending';
+      await updateInquiryStatus(id, status);
+      setInquiries(c => c.map(i => i.id === id ? { ...i, is_read: readState, status } : i));
+      if (selectedInquiry && selectedInquiry.id === id) {
+        setSelectedInquiry({ ...selectedInquiry, is_read: readState, status });
+      }
+      toast.success(readState ? 'Marked as read' : 'Marked as unread');
+    } catch (error) {
+      toast.error('Failed to update status');
     }
   };
 
   // Delete single
-  const handleDelete = (id: string) => {
-    const updated = inquiries.filter((inq) => inq.id !== id);
-    saveToStorage(updated);
-    setDeleteConfirm(null);
-    if (selectedInquiry && selectedInquiry.id === id) {
-      setSelectedInquiry(null);
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteInquiry(id);
+      setInquiries(c => c.filter(i => i.id !== id));
+      setDeleteConfirm(null);
+      if (selectedInquiry && selectedInquiry.id === id) {
+        setSelectedInquiry(null);
+      }
+      toast.success('Inquiry deleted');
+    } catch (error) {
+      toast.error('Failed to delete inquiry');
     }
   };
 
   // Mark all read
-  const handleMarkAllRead = () => {
-    const updated = inquiries.map((inq) => ({ ...inq, read: true }));
-    saveToStorage(updated);
+  const handleMarkAllRead = async () => {
+    try {
+      await markAllInquiriesRead();
+      setInquiries(c => c.map(i => ({ ...i, is_read: true, status: 'read' as const })));
+      toast.success('All inquiries marked as read');
+    } catch (error) {
+      toast.error('Failed to mark all as read');
+    }
   };
 
   // Clear all
-  const handleClearAll = () => {
-    saveToStorage([]);
-    setClearAllConfirm(false);
-    setSelectedInquiry(null);
+  const handleClearAll = async () => {
+    try {
+      await clearAllInquiries();
+      setInquiries([]);
+      setClearAllConfirm(false);
+      setSelectedInquiry(null);
+      toast.success('All inquiries cleared');
+    } catch (error) {
+      toast.error('Failed to clear inquiries');
+    }
   };
 
   // Search and Filter calculations
@@ -161,8 +132,8 @@ export default function AdminInquiriesPage() {
       
       const matchesFilter =
         statusFilter === "All" ||
-        (statusFilter === "Unread" && !inq.read) ||
-        (statusFilter === "Read" && inq.read);
+        (statusFilter === "Unread" && !inq.is_read) ||
+        (statusFilter === "Read" && inq.is_read);
 
       return matchesSearch && matchesFilter;
     });
@@ -171,11 +142,11 @@ export default function AdminInquiriesPage() {
   // Stats
   const stats = useMemo(() => {
     const total = inquiries.length;
-    const unread = inquiries.filter((i) => !i.read).length;
+    const unread = inquiries.filter((i) => !i.is_read).length;
     
     // Count inquiries from this week (last 7 days)
     const sevenDaysAgo = Date.now() - 7 * 86400000;
-    const thisWeek = inquiries.filter((i) => new Date(i.date).getTime() > sevenDaysAgo).length;
+    const thisWeek = inquiries.filter((i) => new Date(i.created_at).getTime() > sevenDaysAgo).length;
 
     return { total, unread, thisWeek };
   }, [inquiries]);
@@ -295,7 +266,12 @@ export default function AdminInquiriesPage() {
       </div>
 
       {/* Main Content Area */}
-      {filteredInquiries.length === 0 ? (
+      {loading ? (
+        <div className="bg-zinc-900 border border-white/10 rounded-2xl p-16 text-center">
+          <div className="animate-spin w-8 h-8 border-2 border-electric-blue border-t-transparent rounded-full mx-auto mb-4" />
+          <p className="text-sm text-zinc-500">Loading inquiries...</p>
+        </div>
+      ) : filteredInquiries.length === 0 ? (
         /* Empty State */
         <div className="bg-zinc-900 border border-white/10 rounded-2xl p-16 text-center">
           <MessageSquare className="w-16 h-16 text-zinc-700 mx-auto mb-4" />
@@ -323,19 +299,19 @@ export default function AdminInquiriesPage() {
                   <tr
                     key={inq.id}
                     className={`hover:bg-white/[0.02] transition-colors ${
-                      !inq.read ? "bg-white/[0.01]" : ""
+                      !inq.is_read ? "bg-white/[0.01]" : ""
                     }`}
                   >
                     {/* Status Dot */}
                     <td className="pl-5 py-4">
-                      {!inq.read && (
+                      {!inq.is_read && (
                         <span className="block w-2.5 h-2.5 rounded-full bg-electric-blue animate-pulse" />
                       )}
                     </td>
 
                     {/* Name */}
                     <td className="px-5 py-4">
-                      <span className={`font-semibold ${!inq.read ? "text-white" : "text-zinc-300"}`}>
+                      <span className={`font-semibold ${!inq.is_read ? "text-white" : "text-zinc-300"}`}>
                         {inq.name}
                       </span>
                     </td>
@@ -344,7 +320,7 @@ export default function AdminInquiriesPage() {
                     <td className="px-5 py-4 text-zinc-400">{inq.email}</td>
 
                     {/* Phone */}
-                    <td className="px-5 py-4 text-zinc-400">{inq.phone}</td>
+                    <td className="px-5 py-4 text-zinc-400">{inq.phone || '-'}</td>
 
                     {/* Short Message */}
                     <td className="px-5 py-4 text-zinc-300 max-w-[280px] truncate">
@@ -352,7 +328,7 @@ export default function AdminInquiriesPage() {
                     </td>
 
                     {/* Date */}
-                    <td className="px-5 py-4 text-zinc-500">{formatDate(inq.date)}</td>
+                    <td className="px-5 py-4 text-zinc-500">{formatDate(inq.created_at)}</td>
 
                     {/* Action buttons */}
                     <td className="px-5 py-4 text-right">
@@ -365,13 +341,13 @@ export default function AdminInquiriesPage() {
                           <Eye className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => markAsRead(inq.id, !inq.read)}
+                          onClick={() => markAsRead(inq.id, !inq.is_read)}
                           className={`p-2 rounded-lg border transition-all ${
-                            !inq.read
+                            !inq.is_read
                               ? "bg-electric-blue/10 border-electric-blue/20 text-electric-blue hover:bg-electric-blue hover:text-white"
                               : "bg-white/5 border-white/10 text-zinc-500 hover:text-zinc-300 hover:bg-white/10"
                           }`}
-                          title={!inq.read ? "Mark as Read" : "Mark as Unread"}
+                          title={!inq.is_read ? "Mark as Read" : "Mark as Unread"}
                         >
                           <Check className="w-4 h-4" />
                         </button>
@@ -396,25 +372,25 @@ export default function AdminInquiriesPage() {
               <div
                 key={inq.id}
                 className={`bg-zinc-900 border rounded-2xl p-4 space-y-3 ${
-                  !inq.read ? "border-electric-blue/40" : "border-white/10"
+                  !inq.is_read ? "border-electric-blue/40" : "border-white/10"
                 }`}
               >
                 <div className="flex justify-between items-start">
                   <div>
                     <div className="flex items-center gap-2">
-                      {!inq.read && <span className="w-2.5 h-2.5 rounded-full bg-electric-blue shrink-0" />}
+                      {!inq.is_read && <span className="w-2.5 h-2.5 rounded-full bg-electric-blue shrink-0" />}
                       <h4 className="font-bold text-white text-base">{inq.name}</h4>
                     </div>
-                    <p className="text-xs text-zinc-500 mt-1">{formatDate(inq.date)}</p>
+                    <p className="text-xs text-zinc-500 mt-1">{formatDate(inq.created_at)}</p>
                   </div>
-                  <Badge className={`text-[8px] font-bold px-1.5 py-0.5 uppercase ${!inq.read ? "bg-electric-blue text-white" : "bg-zinc-700 text-zinc-400"}`}>
-                    {!inq.read ? "Unread" : "Read"}
+                  <Badge className={`text-[8px] font-bold px-1.5 py-0.5 uppercase ${!inq.is_read ? "bg-electric-blue text-white" : "bg-zinc-700 text-zinc-400"}`}>
+                    {!inq.is_read ? "Unread" : "Read"}
                   </Badge>
                 </div>
 
                 <div className="space-y-1.5 text-xs text-zinc-400">
                   <p className="flex items-center gap-1.5"><Mail className="w-3.5 h-3.5" /> {inq.email}</p>
-                  <p className="flex items-center gap-1.5"><Phone className="w-3.5 h-3.5" /> {inq.phone}</p>
+                  <p className="flex items-center gap-1.5"><Phone className="w-3.5 h-3.5" /> {inq.phone || '-'}</p>
                 </div>
 
                 <p className="text-sm text-zinc-300 line-clamp-2 bg-white/5 border border-white/[0.06] rounded-xl p-3">
@@ -433,10 +409,10 @@ export default function AdminInquiriesPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => markAsRead(inq.id, !inq.read)}
-                    className={`flex-1 ${!inq.read ? "border-electric-blue/30 text-electric-blue" : "border-white/10 text-zinc-400"}`}
+                    onClick={() => markAsRead(inq.id, !inq.is_read)}
+                    className={`flex-1 ${!inq.is_read ? "border-electric-blue/30 text-electric-blue" : "border-white/10 text-zinc-400"}`}
                   >
-                    <Check className="w-3.5 h-3.5 mr-1.5" /> {!inq.read ? "Read" : "Unread"}
+                    <Check className="w-3.5 h-3.5 mr-1.5" /> {!inq.is_read ? "Read" : "Unread"}
                   </Button>
                   <Button
                     variant="outline"
@@ -472,7 +448,7 @@ export default function AdminInquiriesPage() {
             <h3 className="text-xl font-bold text-white mb-1">{selectedInquiry.subject || "Inquiry Details"}</h3>
             <p className="text-xs text-zinc-500 mb-6 flex items-center gap-1.5">
               <Clock className="w-3.5 h-3.5 text-zinc-600" />
-              Received on {formatDateTime(selectedInquiry.date)}
+              Received on {formatDateTime(selectedInquiry.created_at)}
             </p>
 
             <div className="space-y-4">
@@ -502,8 +478,8 @@ export default function AdminInquiriesPage() {
                 </div>
                 <div>
                   <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold mb-0.5">Status</p>
-                  <Badge className={`text-[8px] font-bold px-2 py-0.5 uppercase border ${selectedInquiry.read ? "bg-zinc-700 text-zinc-400" : "bg-electric-blue text-white"}`}>
-                    {selectedInquiry.read ? "Read" : "Unread"}
+                  <Badge className={`text-[8px] font-bold px-2 py-0.5 uppercase border ${selectedInquiry.is_read ? "bg-zinc-700 text-zinc-400" : "bg-electric-blue text-white"}`}>
+                    {selectedInquiry.is_read ? "Read" : "Unread"}
                   </Badge>
                 </div>
               </div>
@@ -521,7 +497,7 @@ export default function AdminInquiriesPage() {
 
             {/* Bottom Actions */}
             <div className="flex gap-3 mt-6 justify-end border-t border-white/5 pt-4">
-              {!selectedInquiry.read ? (
+              {!selectedInquiry.is_read ? (
                 <Button
                   onClick={() => markAsRead(selectedInquiry.id, true)}
                   className="bg-electric-blue hover:bg-blue-600 text-white font-semibold gap-2"

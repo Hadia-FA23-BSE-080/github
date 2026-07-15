@@ -1,203 +1,229 @@
 "use client";
 
-import { useState } from "react";
-import {
-  ShieldCheck,
-  Calendar,
-  MapPin,
-  Clock,
-  Phone,
-  Check,
-  X,
-  Eye,
-  Car,
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
+import { ShieldCheck, Calendar, Clock, Phone, Check, X, Eye, Car, MapPin, Trash2 } from "lucide-react";
+import { supabase } from '@/lib/supabase';
+import { updateInspectionStatus, deleteInspection } from "@/lib/admin-actions";
+import { toast } from "sonner";
 
-type InspectionStatus = "Scheduled" | "Completed" | "Cancelled";
-type InspectionPlan = "Basic" | "Standard" | "Premium";
+type InspStatus = "pending" | "scheduled" | "completed" | "cancelled";
+type InspPlan = "basic" | "standard" | "premium";
 
 interface Inspection {
   id: string;
-  carTitle: string;
-  carYear: number;
-  regNumber: string;
-  customerName: string;
-  customerPhone: string;
-  plan: InspectionPlan;
-  planPrice: string;
+  make: string;
+  model: string;
+  year: number;
+  registration_number: string;
+  customer_name: string;
+  customer_phone: string;
+  plan: InspPlan;
+  plan_price: number;
   address: string;
-  date: string;
-  timeSlot: string;
-  status: InspectionStatus;
+  scheduled_date: string;
+  time_slot: string;
+  status: InspStatus;
+  created_at: string;
 }
 
-const INSPECTIONS: Inspection[] = [
-  { id: "INS-2401", carTitle: "Honda Civic Turbo", carYear: 2024, regNumber: "LEH-5643", customerName: "Kamran Shah", customerPhone: "+92 300 1112233", plan: "Premium", planPrice: "PKR 8,500", address: "DHA Phase 5, Lahore", date: "Jul 12, 2026", timeSlot: "10:00 AM – 12:00 PM", status: "Scheduled" },
-  { id: "INS-2402", carTitle: "Toyota Corolla GLi", carYear: 2023, regNumber: "ISB-8812", customerName: "Ali Hassan", customerPhone: "+92 321 4455667", plan: "Standard", planPrice: "PKR 5,500", address: "F-10 Markaz, Islamabad", date: "Jul 11, 2026", timeSlot: "2:00 PM – 4:00 PM", status: "Scheduled" },
-  { id: "INS-2403", carTitle: "KIA Sportage AWD", carYear: 2024, regNumber: "KHI-1290", customerName: "Nadia Farooq", customerPhone: "+92 333 7788990", plan: "Premium", planPrice: "PKR 8,500", address: "Clifton Block 5, Karachi", date: "Jul 10, 2026", timeSlot: "10:00 AM – 12:00 PM", status: "Completed" },
-  { id: "INS-2404", carTitle: "Suzuki Alto VXR", carYear: 2023, regNumber: "LHR-4421", customerName: "Bilal Ahmed", customerPhone: "+92 345 1122334", plan: "Basic", planPrice: "PKR 3,500", address: "Gulberg III, Lahore", date: "Jul 09, 2026", timeSlot: "4:00 PM – 6:00 PM", status: "Completed" },
-  { id: "INS-2405", carTitle: "Hyundai Tucson GLS", carYear: 2023, regNumber: "RWP-6678", customerName: "Zeeshan Malik", customerPhone: "+92 312 9988776", plan: "Standard", planPrice: "PKR 5,500", address: "Bahria Town Phase 4, Rawalpindi", date: "Jul 08, 2026", timeSlot: "10:00 AM – 12:00 PM", status: "Cancelled" },
-  { id: "INS-2406", carTitle: "MG HS Essence", carYear: 2024, regNumber: "ISB-3345", customerName: "Sara Qureshi", customerPhone: "+92 300 5566778", plan: "Premium", planPrice: "PKR 8,500", address: "G-11 Markaz, Islamabad", date: "Jul 13, 2026", timeSlot: "2:00 PM – 4:00 PM", status: "Scheduled" },
-];
-
-const statusColor: Record<InspectionStatus, string> = {
-  Scheduled: "bg-electric-blue/10 text-electric-blue border-electric-blue/20",
-  Completed: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-  Cancelled: "bg-red-500/10 text-red-400 border-red-500/20",
-};
-
-const planColor: Record<InspectionPlan, string> = {
-  Basic: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20",
-  Standard: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-  Premium: "bg-purple-500/10 text-purple-400 border-purple-500/20",
-};
-
 export default function InspectionsAdminPage() {
-  const [inspections, setInspections] = useState<Inspection[]>(INSPECTIONS);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [items, setItems] = useState<Inspection[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState<string | null>(null);
+
+  // Fetch from Supabase
+  useEffect(() => {
+    const fetchInspections = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('inspections')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        setItems(data || []);
+      } catch (error) {
+        console.error('Failed to fetch inspections:', error);
+        toast.error('Failed to load inspections');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInspections();
+  }, []);
 
   const stats = {
-    scheduled: inspections.filter((i) => i.status === "Scheduled").length,
-    completed: inspections.filter((i) => i.status === "Completed").length,
-    cancelled: inspections.filter((i) => i.status === "Cancelled").length,
+    scheduled: items.filter(i => i.status === "scheduled").length,
+    completed: items.filter(i => i.status === "completed").length,
+    cancelled: items.filter(i => i.status === "cancelled").length,
+    pending: items.filter(i => i.status === "pending").length,
   };
 
-  const handleMarkComplete = (id: string) => {
-    setInspections((prev) =>
-      prev.map((i) => (i.id === id ? { ...i, status: "Completed" as InspectionStatus } : i))
-    );
+  const mark = async (id: string, s: InspStatus) => {
+    try {
+      await updateInspectionStatus(id, s);
+      setItems(prev => prev.map(i => i.id === id ? { ...i, status: s } : i));
+      toast.success(`Inspection ${s}`);
+    } catch (error) {
+      toast.error('Failed to update status');
+    }
   };
 
-  const handleCancel = (id: string) => {
-    setInspections((prev) =>
-      prev.map((i) => (i.id === id ? { ...i, status: "Cancelled" as InspectionStatus } : i))
-    );
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteInspection(id);
+      setItems(prev => prev.filter(i => i.id !== id));
+      toast.success('Inspection deleted');
+    } catch (error) {
+      toast.error('Failed to delete inspection');
+    }
   };
+
+  const statCards = [
+    { label: "Pending", value: stats.pending, color: "#FF6B00" },
+    { label: "Scheduled", value: stats.scheduled, color: "#0055FE" },
+    { label: "Completed", value: stats.completed, color: "#00B67A" },
+    { label: "Cancelled", value: stats.cancelled, color: "#ef4444" },
+  ];
+
+  const statusStyle: Record<InspStatus, { bg: string; color: string }> = {
+    pending: { bg: "rgba(255,107,0,0.12)", color: "#FF6B00" },
+    scheduled: { bg: "rgba(0,85,254,0.12)", color: "#0055FE" },
+    completed: { bg: "rgba(0,182,122,0.12)", color: "#00B67A" },
+    cancelled: { bg: "rgba(239,68,68,0.12)", color: "#ef4444" },
+  };
+
+  const planStyle: Record<InspPlan, { bg: string; color: string }> = {
+    basic: { bg: "rgba(100,100,100,0.15)", color: "#888" },
+    standard: { bg: "rgba(245,158,11,0.12)", color: "#f59e0b" },
+    premium: { bg: "rgba(139,92,246,0.12)", color: "#8B5CF6" },
+  };
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
+  };
+
+  const formatPrice = (price: number) => `PKR ${price.toLocaleString()}`;
+
+  function Chip({ label, style }: { label: string; style: { bg: string; color: string } }) {
+    return (
+      <span style={{ padding: "2px 10px", borderRadius: 20, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", background: style.bg, color: style.color }}>
+        {label}
+      </span>
+    );
+  }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
-      {/* Header */}
-      <div>
-        <h2 className="text-3xl font-extrabold text-white tracking-tight">Inspection Bookings</h2>
-        <p className="text-sm text-zinc-400 mt-1">Manage and track all vehicle inspection appointments</p>
+    <div style={{ maxWidth: 1000 }}>
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 700, color: "#fff", margin: 0 }}>Inspection Bookings</h1>
+        <p style={{ fontSize: 12, color: "#555", marginTop: 4 }}>Manage all vehicle inspection appointments.</p>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="bg-zinc-900 border border-white/10 rounded-xl px-5 py-4 flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-electric-blue/10 border border-electric-blue/20">
-            <Clock className="w-5 h-5 text-electric-blue" />
-          </div>
-          <div>
-            <p className="text-xs text-zinc-500 uppercase tracking-wider font-semibold">Scheduled</p>
-            <p className="text-2xl font-extrabold text-electric-blue">{stats.scheduled}</p>
-          </div>
-        </div>
-        <div className="bg-zinc-900 border border-white/10 rounded-xl px-5 py-4 flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-            <Check className="w-5 h-5 text-emerald-400" />
-          </div>
-          <div>
-            <p className="text-xs text-zinc-500 uppercase tracking-wider font-semibold">Completed</p>
-            <p className="text-2xl font-extrabold text-emerald-400">{stats.completed}</p>
-          </div>
-        </div>
-        <div className="bg-zinc-900 border border-white/10 rounded-xl px-5 py-4 flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20">
-            <X className="w-5 h-5 text-red-400" />
-          </div>
-          <div>
-            <p className="text-xs text-zinc-500 uppercase tracking-wider font-semibold">Cancelled</p>
-            <p className="text-2xl font-extrabold text-red-400">{stats.cancelled}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Inspection Cards */}
-      <div className="space-y-4">
-        {inspections.map((ins) => (
-          <div
-            key={ins.id}
-            className="bg-zinc-900 border border-white/10 rounded-2xl overflow-hidden hover:border-white/15 transition-all"
-          >
-            {/* Main Row */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5">
-              <div className="flex items-center gap-4 flex-1 min-w-0">
-                <div className="p-3 rounded-xl bg-white/5 border border-white/10 shrink-0">
-                  <ShieldCheck className="w-5 h-5 text-electric-blue" />
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-sm font-bold text-white">{ins.carTitle} ({ins.carYear})</p>
-                    <Badge className={`text-[9px] font-bold px-2 py-0.5 uppercase border ${planColor[ins.plan]}`}>
-                      {ins.plan}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-3 mt-1.5 text-xs text-zinc-500 flex-wrap">
-                    <span className="flex items-center gap-1"><Car className="w-3 h-3" />{ins.regNumber}</span>
-                    <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{ins.date}</span>
-                    <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{ins.timeSlot}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 shrink-0">
-                <Badge className={`text-[10px] font-bold px-2.5 py-1 uppercase border ${statusColor[ins.status]}`}>
-                  {ins.status}
-                </Badge>
-                <span className="text-sm font-bold text-white">{ins.planPrice}</span>
-                <button
-                  onClick={() => setExpandedId(expandedId === ins.id ? null : ins.id)}
-                  className="p-2 rounded-lg border border-white/10 text-zinc-400 hover:text-white hover:bg-white/5 transition-all"
-                >
-                  <Eye className="w-4 h-4" />
-                </button>
-                {ins.status === "Scheduled" && (
-                  <>
-                    <button
-                      onClick={() => handleMarkComplete(ins.id)}
-                      className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all"
-                      title="Mark Complete"
-                    >
-                      <Check className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleCancel(ins.id)}
-                      className="p-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-all"
-                      title="Cancel"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </>
-                )}
-              </div>
+      {/* Stats */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 24 }}>
+        {statCards.map(s => (
+          <div key={s.label} style={{ background: "#1a1a1a", border: "1px solid #252525", borderRadius: 14, padding: "18px 20px", display: "flex", alignItems: "center", gap: 14 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 10, background: s.color + "20", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {s.label === "Pending" && <Clock style={{ width: 18, height: 18, color: s.color }} />}
+              {s.label === "Scheduled" && <Clock style={{ width: 18, height: 18, color: s.color }} />}
+              {s.label === "Completed" && <Check style={{ width: 18, height: 18, color: s.color }} />}
+              {s.label === "Cancelled" && <X style={{ width: 18, height: 18, color: s.color }} />}
             </div>
-
-            {/* Expanded Details */}
-            {expandedId === ins.id && (
-              <div className="px-5 pb-5 pt-0 border-t border-white/[0.06] mt-0">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
-                  <div>
-                    <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold mb-1">Customer</p>
-                    <p className="text-sm font-semibold text-white">{ins.customerName}</p>
-                    <p className="text-xs text-zinc-400 flex items-center gap-1 mt-1"><Phone className="w-3 h-3" />{ins.customerPhone}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold mb-1">Location</p>
-                    <p className="text-sm text-zinc-300 flex items-center gap-1"><MapPin className="w-3.5 h-3.5 text-neon-red" />{ins.address}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold mb-1">Booking ID</p>
-                    <p className="text-sm font-mono text-electric-blue">{ins.id}</p>
-                  </div>
-                </div>
-              </div>
-            )}
+            <div>
+              <p style={{ fontSize: 10, fontWeight: 600, color: "#555", textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>{s.label}</p>
+              <p style={{ fontSize: 26, fontWeight: 700, color: s.color, margin: "2px 0 0" }}>{s.value}</p>
+            </div>
           </div>
         ))}
       </div>
+
+      {/* Loading State */}
+      {loading ? (
+        <div style={{ textAlign: "center", padding: 60, color: "#444" }}>
+          <div style={{ display: "inline-block", width: 40, height: 40, border: "3px solid #2a2a2a", borderTopColor: "#0055FE", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+          <p style={{ marginTop: 16, fontSize: 14 }}>Loading inspections...</p>
+        </div>
+      ) : items.length === 0 ? (
+        <div style={{ textAlign: "center", padding: 60, color: "#444" }}>
+          <ShieldCheck style={{ width: 48, height: 48, color: "#333", margin: "0 auto 16px" }} />
+          <p style={{ fontSize: 14 }}>No inspection bookings yet</p>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {items.map(ins => (
+            <div key={ins.id} style={{ background: "#1a1a1a", border: "1px solid #252525", borderRadius: 14, overflow: "hidden" }}>
+              <div style={{ padding: "18px 20px", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(0,85,254,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <ShieldCheck style={{ width: 18, height: 18, color: "#0055FE" }} />
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: "#ddd" }}>{ins.make} {ins.model} ({ins.year})</span>
+                    <Chip label={ins.plan} style={planStyle[ins.plan]} />
+                  </div>
+                  <div style={{ display: "flex", gap: 14, marginTop: 6, flexWrap: "wrap" }}>
+                    {[
+                      { icon: Car, text: ins.registration_number },
+                      { icon: Calendar, text: formatDate(ins.scheduled_date) },
+                      { icon: Clock, text: ins.time_slot },
+                    ].map(({ icon: Icon, text }) => (
+                      <span key={text} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#555" }}>
+                        <Icon style={{ width: 11, height: 11 }} />{text}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+                  <Chip label={ins.status} style={statusStyle[ins.status]} />
+                  <span style={{ fontSize: 13, fontWeight: 700, color: "#00B67A" }}>{formatPrice(ins.plan_price)}</span>
+                  <button onClick={() => setExpanded(expanded === ins.id ? null : ins.id)}
+                    style={{ padding: 8, borderRadius: 8, background: "rgba(255,255,255,0.04)", border: "1px solid #2a2a2a", color: "#666", cursor: "pointer" }}>
+                    <Eye style={{ width: 14, height: 14 }} />
+                  </button>
+                  {(ins.status === "pending" || ins.status === "scheduled") && <>
+                    <button onClick={() => mark(ins.id, "completed")} title="Mark Complete"
+                      style={{ padding: 8, borderRadius: 8, background: "rgba(0,182,122,0.1)", border: "1px solid rgba(0,182,122,0.2)", color: "#00B67A", cursor: "pointer" }}>
+                      <Check style={{ width: 14, height: 14 }} />
+                    </button>
+                    <button onClick={() => mark(ins.id, "cancelled")} title="Cancel"
+                      style={{ padding: 8, borderRadius: 8, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444", cursor: "pointer" }}>
+                      <X style={{ width: 14, height: 14 }} />
+                    </button>
+                  </>}
+                  <button onClick={() => handleDelete(ins.id)} title="Delete"
+                    style={{ padding: 8, borderRadius: 8, background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444", cursor: "pointer" }}>
+                    <Trash2 style={{ width: 14, height: 14 }} />
+                  </button>
+                </div>
+              </div>
+              {expanded === ins.id && (
+                <div style={{ borderTop: "1px solid #222", padding: "14px 20px", display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+                  <div>
+                    <p style={{ fontSize: 10, color: "#444", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 4 }}>Customer</p>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: "#ddd", margin: 0 }}>{ins.customer_name}</p>
+                    <p style={{ fontSize: 12, color: "#555", margin: "3px 0 0", display: "flex", alignItems: "center", gap: 4 }}>
+                      <Phone style={{ width: 11, height: 11 }} />{ins.customer_phone}
+                    </p>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: 10, color: "#444", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 4 }}>Location</p>
+                    <p style={{ fontSize: 12, color: "#888", margin: 0, display: "flex", alignItems: "center", gap: 4 }}>
+                      <MapPin style={{ width: 11, height: 11, color: "#ef4444" }} />{ins.address}
+                    </p>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: 10, color: "#444", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 4 }}>Booking ID</p>
+                    <p style={{ fontSize: 12, fontFamily: "monospace", color: "#0055FE", margin: 0 }}>{ins.id}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

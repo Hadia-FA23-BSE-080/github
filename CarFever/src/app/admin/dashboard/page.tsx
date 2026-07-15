@@ -1,404 +1,166 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import {
-  Car,
-  Users,
-  ShieldCheck,
-  DollarSign,
-  TrendingUp,
-  Check,
-  X,
-  Edit,
-  ArrowUpRight,
-  ExternalLink,
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from 'react';
+import { Activity, Car, Users, Eye, TrendingUp, TrendingDown, DollarSign, FileText, ShieldCheck, MessageSquare, ArrowUpRight } from 'lucide-react';
+import Link from 'next/link';
+import { supabase } from '@/lib/supabase';
 
-interface StatCardProps {
-  title: string;
-  value: string;
-  change: string;
-  icon: React.ComponentType<any>;
-  accentColor: string;
-  glowColor: string;
-}
+const S = {
+  card: { background: "#1a1a1a", border: "1px solid #252525", borderRadius: 14, padding: 24 } as React.CSSProperties,
+  label: { fontSize: 11, fontWeight: 600, color: "#555", letterSpacing: "0.1em", textTransform: "uppercase" as const, marginBottom: 6 },
+  value: { fontSize: 28, fontWeight: 700, color: "#fff", lineHeight: 1.1, margin: "8px 0 4px" },
+  badge: (color: string): React.CSSProperties => ({ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, color, fontWeight: 600 }),
+};
 
-function StatCard({ title, value, change, icon: Icon, accentColor, glowColor }: StatCardProps) {
-  return (
-    <div className={`bg-zinc-900 border border-white/10 rounded-2xl p-6 hover:scale-102 hover:border-${accentColor}/30 transition-all duration-300 relative overflow-hidden group`}>
-      <div className={`absolute top-[-20%] right-[-10%] w-32 h-32 rounded-full bg-${accentColor}/5 blur-2xl group-hover:bg-${accentColor}/10 transition-all`} />
-      <div className="flex justify-between items-start">
-        <div>
-          <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">{title}</p>
-          <h3 className="text-3xl font-extrabold text-white mt-2 tracking-tight">{value}</h3>
-        </div>
-        <div className={`p-3 rounded-xl bg-white/5 border border-white/10 text-${accentColor} group-hover:glow-${glowColor} transition-all`}>
-          <Icon className="w-5 h-5" />
-        </div>
-      </div>
-      <div className="flex items-center gap-1.5 mt-4 text-xs">
-        <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
-        <span className="text-emerald-500 font-bold">{change}</span>
-        <span className="text-zinc-600">vs last month</span>
-      </div>
-    </div>
-  );
-}
-
-interface Submission {
-  id: string;
-  title: string;
-  seller: string;
-  email: string;
-  date: string;
-  price: string;
-  status: "Pending" | "Approved" | "Rejected";
-  image: string;
-}
-
-const INITIAL_SUBMISSIONS: Submission[] = [
-  {
-    id: "1",
-    title: "Honda Civic Oriel 1.8",
-    seller: "Kamran Shah",
-    email: "kamran@gmail.com",
-    date: "10 mins ago",
-    price: "PKR 62.5 Lacs",
-    status: "Pending",
-    image: "https://images.unsplash.com/photo-1580273916550-e323be2ae537?auto=format&fit=crop&w=150&h=100&q=80",
-  },
-  {
-    id: "2",
-    title: "Toyota Fortuner Legender",
-    seller: "Zeeshan Ali",
-    email: "zeeshan@hotmail.com",
-    date: "2 hours ago",
-    price: "PKR 185.0 Lacs",
-    status: "Pending",
-    image: "https://images.unsplash.com/photo-1542282088-fe8426682b8f?auto=format&fit=crop&w=150&h=100&q=80",
-  },
-  {
-    id: "3",
-    title: "KIA Sportage Alpha",
-    seller: "Ayesha Malik",
-    email: "ayesha@yahoo.com",
-    date: "1 day ago",
-    price: "PKR 76.0 Lacs",
-    status: "Approved",
-    image: "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=150&h=100&q=80",
-  },
-  {
-    id: "4",
-    title: "Suzuki Swift GLX CVT",
-    seller: "Muhammad Bilal",
-    email: "bilal@gmail.com",
-    date: "2 days ago",
-    price: "PKR 44.5 Lacs",
-    status: "Rejected",
-    image: "https://images.unsplash.com/photo-1549317661-bd32c8ce0637?auto=format&fit=crop&w=150&h=100&q=80",
-  },
+const quickLinks = [
+  { label: "Add New Car",    href: "/admin/cars/new",    icon: Car,          color: "#0055FE" },
+  { label: "Write Post",     href: "/admin/blogs/new",   icon: FileText,     color: "#00B67A" },
+  { label: "View Cars",      href: "/admin/cars",        icon: Car,          color: "#FF6B00" },
+  { label: "View Inquiries", href: "/admin/inquiries",   icon: MessageSquare,color: "#8B5CF6" },
 ];
 
-export default function AdminDashboard() {
-  const [submissions, setSubmissions] = useState<Submission[]>(INITIAL_SUBMISSIONS);
+const recentActivity = [
+  { title: "New Car Listed",    desc: "Mercedes-Benz S-Class 2024 — John D.",     time: "2m ago" },
+  { title: "Inquiry Received",  desc: "New inquiry for Porsche 911 GT3 RS",        time: "1h ago" },
+  { title: "User Registered",   desc: "Sarah M. joined the platform",              time: "3h ago" },
+  { title: "Blog Published",    desc: "\"Top 10 Luxury Cars of 2024\" is live",    time: "5h ago" },
+  { title: "Inspection Done",   desc: "Honda Civic — inspection completed",         time: "8h ago" },
+];
 
-  const handleStatusChange = (id: string, newStatus: "Approved" | "Rejected") => {
-    setSubmissions((prev) =>
-      prev.map((sub) => (sub.id === id ? { ...sub, status: newStatus } : sub))
-    );
-  };
+const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+export default function AdminDashboard() {
+  const [stats,   setStats]   = useState({ cars: 0, blogs: 0, users: 0, views: 0 });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const [{ count: cars }, { count: blogs }] = await Promise.all([
+          supabase.from('cars').select('*', { count: 'exact', head: true }),
+          supabase.from('blogs').select('*', { count: 'exact', head: true }),
+        ]);
+        setStats({ cars: cars || 0, blogs: blogs || 0, users: 1284, views: 48320 });
+      } catch { /* noop */ }
+      setLoading(false);
+    }
+    load();
+  }, []);
+
+  const statCards = [
+    { label: "Total Views",    value: loading ? "…" : stats.views.toLocaleString(), icon: Eye,         trend: "+12.5%", up: true,  color: "#0055FE" },
+    { label: "Car Listings",   value: loading ? "…" : stats.cars.toLocaleString(),  icon: Car,         trend: "+4.1%",  up: true,  color: "#FF6B00" },
+    { label: "Active Users",   value: loading ? "…" : stats.users.toLocaleString(), icon: Users,       trend: "-2.3%",  up: false, color: "#8B5CF6" },
+    { label: "Blog Posts",     value: loading ? "…" : stats.blogs.toLocaleString(), icon: FileText,    trend: "+8.7%",  up: true,  color: "#00B67A" },
+  ];
+
+  // Simple bar chart data (mock)
+  const chartData = months.slice(0, 7).map((m, i) => ({ label: m, value: 1200 + Math.sin(i) * 800 + i * 200 }));
+  const chartMax = Math.max(...chartData.map(d => d.value));
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
-      
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h2 className="text-3xl font-extrabold text-white tracking-tight">Dashboard Overview</h2>
-          <p className="text-sm text-zinc-400 mt-1">Real-time control panel & analytics metrics</p>
-        </div>
-        <div className="flex gap-3">
-          <Button variant="outline" className="border-white/10 text-white hover:bg-white/5" disabled>
-            Export Report
-          </Button>
-          <Button className="bg-neon-red hover:bg-red-600 text-white font-semibold glow-red-subtle">
-            Refresh Metrics
-          </Button>
-        </div>
+    <div style={{ maxWidth: 1200 }}>
+
+      {/* Header */}
+      <div style={{ marginBottom: 28 }}>
+        <h1 style={{ fontSize: 26, fontWeight: 700, color: "#fff", margin: 0 }}>Dashboard</h1>
+        <p style={{ fontSize: 13, color: "#555", marginTop: 4 }}>Welcome back! Here&apos;s what&apos;s happening with your platform.</p>
       </div>
 
-      {/* Grid: 4 Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
-          title="Total Active Cars"
-          value="1,248"
-          change="+12.5%"
-          icon={Car}
-          accentColor="neon-red"
-          glowColor="red"
-        />
-        <StatCard
-          title="Total Registered Users"
-          value="8,924"
-          change="+8.2%"
-          icon={Users}
-          accentColor="electric-blue"
-          glowColor="blue"
-        />
-        <StatCard
-          title="Pending Inspections"
-          value="42"
-          change="+14.1%"
-          icon={ShieldCheck}
-          accentColor="amber-500"
-          glowColor="amber"
-        />
-        <StatCard
-          title="Revenue This Month"
-          value="PKR 4.2M"
-          change="+19.8%"
-          icon={DollarSign}
-          accentColor="emerald-500"
-          glowColor="emerald"
-        />
-      </div>
-
-      {/* Graph Area & Small list */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Analytics Line Chart Placeholder */}
-        <div className="bg-zinc-900 border border-white/10 rounded-2xl p-6 lg:col-span-2 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-lg font-bold text-white">Cars Listed vs Sold</h3>
-              <div className="flex items-center gap-4 text-xs">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-neon-red inline-block" />
-                  <span className="text-zinc-400">Cars Listed</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-electric-blue inline-block" />
-                  <span className="text-zinc-400">Cars Sold</span>
+      {/* Stat cards */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16, marginBottom: 24 }}>
+        {statCards.map(card => {
+          const Icon = card.icon;
+          return (
+            <div key={card.label} style={{ ...S.card, display: "flex", flexDirection: "column", gap: 4 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={S.label}>{card.label}</span>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: card.color + "20", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Icon style={{ width: 17, height: 17, color: card.color }} />
                 </div>
               </div>
+              <div style={S.value}>{card.value}</div>
+              <span style={S.badge(card.up ? "#00B67A" : "#ef4444")}>
+                {card.up ? <TrendingUp style={{ width: 12, height: 12 }} /> : <TrendingDown style={{ width: 12, height: 12 }} />}
+                {card.trend} vs last month
+              </span>
             </div>
-            <p className="text-xs text-zinc-500 mb-6">Visual overview for the past 30 days period</p>
+          );
+        })}
+      </div>
+
+      {/* Charts row */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 16, marginBottom: 24 }}>
+
+        {/* Bar chart */}
+        <div style={S.card}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+            <div>
+              <h3 style={{ fontSize: 15, fontWeight: 600, color: "#fff", margin: 0 }}>Monthly Traffic</h3>
+              <p style={{ fontSize: 12, color: "#555", margin: "4px 0 0" }}>Page views over the last 7 months</p>
+            </div>
           </div>
-
-          {/* Premium Custom SVG Chart */}
-          <div className="relative h-64 w-full bg-white/[0.02] rounded-xl border border-white/[0.05] p-4 flex flex-col justify-between">
-            {/* Grid lines */}
-            <div className="absolute inset-0 flex flex-col justify-between p-4 pointer-events-none opacity-40">
-              <div className="border-b border-dashed border-white/10 w-full" />
-              <div className="border-b border-dashed border-white/10 w-full" />
-              <div className="border-b border-dashed border-white/10 w-full" />
-              <div className="w-full" />
-            </div>
-
-            {/* SVG Line / Area Graph */}
-            <div className="relative w-full h-44 mt-4">
-              <svg viewBox="0 0 500 150" className="w-full h-full overflow-visible">
-                {/* Red Glow Area (Listed) */}
-                <path
-                  d="M0,130 Q50,70 100,90 T200,40 T300,70 T400,20 T500,10 L500,150 L0,150 Z"
-                  fill="url(#redGlow)"
-                  opacity="0.15"
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 10, height: 180 }}>
+            {chartData.map(d => (
+              <div key={d.label} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+                <div
+                  style={{
+                    width: "100%",
+                    height: (d.value / chartMax) * 150,
+                    background: "linear-gradient(180deg, #0055FE, rgba(0,85,254,0.3))",
+                    borderRadius: "4px 4px 0 0",
+                    minHeight: 12,
+                    transition: "height 0.5s ease",
+                  }}
+                  title={d.value.toFixed(0)}
                 />
-                {/* Blue Glow Area (Sold) */}
-                <path
-                  d="M0,140 Q50,110 100,120 T200,90 T300,100 T400,60 T500,50 L500,150 L0,150 Z"
-                  fill="url(#blueGlow)"
-                  opacity="0.15"
-                />
-
-                {/* Red Line (Listed) */}
-                <path
-                  d="M0,130 Q50,70 100,90 T200,40 T300,70 T400,20 T500,10"
-                  fill="none"
-                  stroke="#ef4444"
-                  strokeWidth="3"
-                  className="drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]"
-                />
-
-                {/* Blue Line (Sold) */}
-                <path
-                  d="M0,140 Q50,110 100,120 T200,90 T300,100 T400,60 T500,50"
-                  fill="none"
-                  stroke="#3b82f6"
-                  strokeWidth="3"
-                  className="drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]"
-                />
-
-                {/* Custom Gradient Definitions */}
-                <defs>
-                  <linearGradient id="redGlow" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#ef4444" />
-                    <stop offset="100%" stopColor="#ef4444" stopOpacity="0" />
-                  </linearGradient>
-                  <linearGradient id="blueGlow" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#3b82f6" />
-                    <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-              </svg>
-            </div>
-
-            {/* X-Axis labels */}
-            <div className="flex justify-between text-[10px] text-zinc-500 font-bold mt-2 px-1">
-              <span>June 10</span>
-              <span>June 17</span>
-              <span>June 24</span>
-              <span>July 01</span>
-              <span>July 08</span>
-            </div>
+                <span style={{ fontSize: 10, color: "#444" }}>{d.label}</span>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Action Panel / Shortcuts */}
-        <div className="bg-zinc-900 border border-white/10 rounded-2xl p-6 flex flex-col justify-between">
-          <div>
-            <h3 className="text-lg font-bold text-white mb-2">Quick Commands</h3>
-            <p className="text-xs text-zinc-500 mb-6">Common administrative actions</p>
-          </div>
-
-          <div className="space-y-3.5">
-            <button className="w-full flex items-center justify-between p-3.5 bg-white/5 border border-white/10 hover:border-neon-red/30 rounded-xl transition-all group text-left">
-              <div>
-                <p className="text-xs font-bold text-white group-hover:text-neon-red transition-colors">Add New Vehicle</p>
-                <p className="text-[10px] text-zinc-500 mt-1">Create official marketplace listing</p>
+        {/* Recent Activity */}
+        <div style={S.card}>
+          <h3 style={{ fontSize: 15, fontWeight: 600, color: "#fff", margin: "0 0 16px" }}>Recent Activity</h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            {recentActivity.map((a, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#0055FE", marginTop: 5, flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 12, fontWeight: 600, color: "#ddd", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.title}</p>
+                  <p style={{ fontSize: 11, color: "#555", margin: "2px 0 0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.desc}</p>
+                </div>
+                <span style={{ fontSize: 10, color: "#444", flexShrink: 0, paddingTop: 2 }}>{a.time}</span>
               </div>
-              <ArrowUpRight className="w-4 h-4 text-zinc-500 group-hover:text-neon-red transition-all" />
-            </button>
-
-            <button className="w-full flex items-center justify-between p-3.5 bg-white/5 border border-white/10 hover:border-electric-blue/30 rounded-xl transition-all group text-left">
-              <div>
-                <p className="text-xs font-bold text-white group-hover:text-electric-blue transition-colors">Schedule Inspection</p>
-                <p className="text-[10px] text-zinc-500 mt-1">Assign inspector & date slots</p>
-              </div>
-              <ArrowUpRight className="w-4 h-4 text-zinc-500 group-hover:text-electric-blue transition-all" />
-            </button>
-
-            <button className="w-full flex items-center justify-between p-3.5 bg-white/5 border border-white/10 hover:border-amber-500/30 rounded-xl transition-all group text-left">
-              <div>
-                <p className="text-xs font-bold text-white group-hover:text-amber-500 transition-colors">Verify User Accounts</p>
-                <p className="text-[10px] text-zinc-500 mt-1">Review pending KYC requests</p>
-              </div>
-              <ArrowUpRight className="w-4 h-4 text-zinc-500 group-hover:text-amber-500 transition-all" />
-            </button>
-          </div>
-
-          <div className="pt-6 border-t border-white/5 text-center mt-6">
-            <a href="/" target="_blank" className="text-xs text-zinc-400 hover:text-white inline-flex items-center gap-1.5 transition-colors font-medium">
-              View Public Website <ExternalLink className="w-3.5 h-3.5" />
-            </a>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Recent Submissions Queue */}
-      <div className="bg-zinc-900 border border-white/10 rounded-2xl p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h3 className="text-lg font-bold text-white">Recent Car Submissions</h3>
-            <p className="text-xs text-zinc-500 mt-1">Review & moderate seller listings</p>
-          </div>
-          <Badge className="bg-white/5 border border-white/10 text-zinc-400">
-            {submissions.filter((s) => s.status === "Pending").length} Action Required
-          </Badge>
-        </div>
-
-        {/* Responsive Table Wrapper */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-white/10 text-xs text-zinc-500 font-bold uppercase tracking-wider">
-                <th className="pb-4 font-semibold">Vehicle</th>
-                <th className="pb-4 font-semibold">Seller</th>
-                <th className="pb-4 font-semibold">Asking Price</th>
-                <th className="pb-4 font-semibold">Date</th>
-                <th className="pb-4 font-semibold">Status</th>
-                <th className="pb-4 font-semibold text-right">Moderation Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/[0.06] text-sm">
-              {submissions.map((sub) => (
-                <tr key={sub.id} className="group hover:bg-white/[0.01] transition-colors">
-                  <td className="py-4 flex items-center gap-3.5">
-                    <img
-                      src={sub.image}
-                      alt={sub.title}
-                      className="w-16 h-11 rounded-lg object-cover bg-zinc-800 border border-white/5 shrink-0"
-                    />
-                    <div>
-                      <p className="font-bold text-white">{sub.title}</p>
-                      <p className="text-[11px] text-zinc-500 mt-0.5">ID: CF-L-{sub.id}048</p>
-                    </div>
-                  </td>
-                  <td className="py-4">
-                    <p className="font-medium text-white">{sub.seller}</p>
-                    <p className="text-xs text-zinc-500 mt-0.5">{sub.email}</p>
-                  </td>
-                  <td className="py-4 font-semibold text-white">{sub.price}</td>
-                  <td className="py-4 text-xs text-zinc-400">{sub.date}</td>
-                  <td className="py-4">
-                    <Badge
-                      className={`text-[10px] font-bold px-2 py-0.5 uppercase border ${
-                        sub.status === "Approved"
-                          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                          : sub.status === "Rejected"
-                          ? "bg-red-500/10 text-red-400 border-red-500/20"
-                          : "bg-amber-500/10 text-amber-400 border-amber-500/20"
-                      }`}
-                    >
-                      {sub.status}
-                    </Badge>
-                  </td>
-                  <td className="py-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      {sub.status === "Pending" ? (
-                        <>
-                          <button
-                            onClick={() => handleStatusChange(sub.id, "Approved")}
-                            className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all"
-                            title="Approve Listing"
-                          >
-                            <Check className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleStatusChange(sub.id, "Rejected")}
-                            className="p-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-all"
-                            title="Reject Listing"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </>
-                      ) : (
-                        <button
-                          onClick={() =>
-                            setSubmissions((prev) =>
-                              prev.map((s) => (s.id === sub.id ? { ...s, status: "Pending" } : s))
-                            )
-                          }
-                          className="px-3 py-1.5 rounded-lg border border-white/10 text-xs text-zinc-400 hover:text-white hover:bg-white/5 transition-all"
-                        >
-                          Reset
-                        </button>
-                      )}
-                      <button
-                        className="p-2 rounded-lg border border-white/10 text-zinc-400 hover:text-white hover:bg-white/5 transition-all"
-                        title="Edit Submission details"
-                        disabled
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {/* Quick actions */}
+      <div style={S.card}>
+        <h3 style={{ fontSize: 15, fontWeight: 600, color: "#fff", margin: "0 0 16px" }}>Quick Actions</h3>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
+          {quickLinks.map(q => {
+            const Icon = q.icon;
+            return (
+              <Link
+                key={q.href}
+                href={q.href}
+                style={{
+                  display: "flex", alignItems: "center", gap: 10,
+                  padding: "12px 16px", borderRadius: 12,
+                  background: q.color + "12", border: `1px solid ${q.color}25`,
+                  textDecoration: "none", transition: "all 0.15s",
+                }}
+              >
+                <Icon style={{ width: 18, height: 18, color: q.color, flexShrink: 0 }} />
+                <span style={{ fontSize: 13, fontWeight: 600, color: "#ccc" }}>{q.label}</span>
+                <ArrowUpRight style={{ width: 12, height: 12, color: "#444", marginLeft: "auto" }} />
+              </Link>
+            );
+          })}
         </div>
       </div>
 

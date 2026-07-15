@@ -311,3 +311,78 @@ export function seedTestData(): void {
   localStorage.setItem('cf_inspection_bookings', JSON.stringify(SEED_INSPECTIONS));
   localStorage.setItem('cf_inquiries', JSON.stringify(SEED_INQUIRIES));
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SUPABASE STORAGE HELPERS
+// These run CLIENT-SIDE (browser) using the public anon-key Supabase client.
+// Heavy uploads (sell-car wizard) should use the server action in actions.ts
+// which uses the service-role key instead.
+// ─────────────────────────────────────────────────────────────────────────────
+
+import { createClient } from '@supabase/supabase-js';
+
+function getPublicSupabase() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key || url === 'placeholder' || key === 'placeholder') {
+    throw new Error('Supabase environment variables are not configured.');
+  }
+  return createClient(url, key);
+}
+
+/**
+ * Upload an array of File objects to the `car-images` Supabase Storage bucket.
+ * @param carId   Used as the folder prefix for the uploaded files.
+ * @param files   Array of File objects to upload.
+ * @returns       Array of public URLs for the successfully uploaded images.
+ */
+export async function uploadCarImages(
+  carId: string,
+  files: File[]
+): Promise<string[]> {
+  const supabase = getPublicSupabase();
+  const urls: string[] = [];
+
+  for (const file of files) {
+    const ext = file.name.split('.').pop() ?? 'jpg';
+    const path = `${carId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+
+    const { error } = await supabase.storage
+      .from('car-images')
+      .upload(path, file, { upsert: false, cacheControl: '3600' });
+
+    if (error) {
+      console.error('uploadCarImages: upload failed for', file.name, error.message);
+      continue;
+    }
+
+    const { data } = supabase.storage.from('car-images').getPublicUrl(path);
+    urls.push(data.publicUrl);
+  }
+
+  return urls;
+}
+
+/**
+ * Delete car images from Supabase Storage by their public URLs.
+ * Extracts the storage path from each URL automatically.
+ * @param urls  Array of public Supabase storage URLs to delete.
+ */
+export async function deleteCarImages(urls: string[]): Promise<void> {
+  if (urls.length === 0) return;
+  const supabase = getPublicSupabase();
+
+  // Extract paths like "car-images/listings/1234-abc.jpg" from public URLs
+  const paths = urls.map((url) => {
+    const match = url.match(/car-images\/(.+)$/);
+    return match ? match[1] : null;
+  }).filter(Boolean) as string[];
+
+  if (paths.length === 0) return;
+
+  const { error } = await supabase.storage.from('car-images').remove(paths);
+  if (error) {
+    console.error('deleteCarImages: deletion failed:', error.message);
+  }
+}
+

@@ -26,7 +26,7 @@ import {
   CheckCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { getAllCars } from "@/lib/car-data";
 import { getWishlist, removeFromWishlist, getWishlistCount } from "@/lib/wishlist";
 
@@ -40,6 +40,7 @@ const navLinks: NavLink[] = [
   { label: "Buy Car", href: "/buy-car" },
   { label: "Sell Car", href: "/sell-car" },
   { label: "Inspections", href: "/inspections" },
+  { label: "Blogs", href: "/blog" },
 ];
 
 const DEMO_NOTIFICATIONS = [
@@ -210,25 +211,22 @@ export function Navbar() {
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-50">
-        {/* Top accent line */}
-        <div className="h-[2px] w-full bg-gradient-to-r from-neon-red via-electric-blue to-neon-red" />
-
         {/* Main navbar */}
-        <nav className="glass-heavy">
+        <nav className="bg-white border-b border-gray-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-16 lg:h-18">
+            <div className="flex items-center justify-between h-16 md:h-20">
               {/* Logo */}
-              <Link href="/" className="flex items-center gap-2.5 group">
+              <Link href="/" className="flex items-center gap-2 group">
                 <div className="relative">
-                  <div className="w-9 h-9 rounded-lg bg-neon-red flex items-center justify-center transition-all duration-300 group-hover:scale-105">
-                    <Car className="w-5 h-5 text-white" />
+                  <div className="w-8 h-8 md:w-9 md:h-9 rounded-lg bg-[#0055FE] flex items-center justify-center transition-all duration-300 group-hover:scale-105">
+                    <Car className="w-4 h-4 md:w-5 md:h-5 text-white" />
                   </div>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-lg font-bold tracking-tight text-white leading-none">
-                    Car<span className="text-neon-red">Fever</span>
+                  <span className="text-base md:text-lg font-bold tracking-tight text-gray-900 leading-none">
+                    Car<span className="text-[#0055FE]">Fever</span>
                   </span>
-                  <span className="text-[10px] text-muted-foreground tracking-[0.2em] uppercase leading-none mt-0.5">
+                  <span className="text-[9px] md:text-[10px] text-gray-500 tracking-[0.2em] uppercase leading-none mt-0.5">
                     Marketplace
                   </span>
                 </div>
@@ -245,7 +243,7 @@ export function Navbar() {
                   >
                     <Link
                       href={link.href}
-                      className="flex items-center gap-1 px-3.5 py-2 text-sm font-medium text-zinc-300 hover:text-white transition-colors duration-200 rounded-lg hover:bg-white/5"
+                      className="flex items-center gap-1 px-3.5 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors duration-200 rounded-lg hover:bg-gray-50"
                     >
                       {link.label}
                       {link.children && (
@@ -254,9 +252,9 @@ export function Navbar() {
                     </Link>
                     {link.children && openDropdown === link.label && (
                       <div className="absolute top-full left-0 pt-2">
-                        <div className="glass-heavy rounded-xl p-2 min-w-[200px] shadow-2xl shadow-black/50">
+                        <div className="bg-white rounded-xl p-2 min-w-[200px] shadow-lg border border-gray-200">
                           {link.children.map((child) => (
-                            <Link key={child.label} href={child.href} className="block px-3.5 py-2.5 text-sm text-zinc-300 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-200">
+                            <Link key={child.label} href={child.href} className="block px-3.5 py-2.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-all duration-200">
                               {child.label}
                             </Link>
                           ))}
@@ -272,7 +270,7 @@ export function Navbar() {
                 {/* Search button */}
                 <button
                   onClick={toggleSearch}
-                  className={`p-2.5 rounded-lg transition-all duration-200 ${searchOpen ? "text-white bg-white/10" : "text-zinc-400 hover:text-white hover:bg-white/5"}`}
+                  className={`p-2.5 rounded-lg transition-all duration-200 ${searchOpen ? "text-[#0055FE] bg-blue-50" : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"}`}
                 >
                   <Search className="w-4.5 h-4.5" />
                 </button>
@@ -280,11 +278,11 @@ export function Navbar() {
                 {/* Wishlist button */}
                 <button
                   onClick={toggleWishlist}
-                  className={`p-2.5 rounded-lg transition-all duration-200 relative ${wishlistOpen ? "text-neon-red bg-white/10" : "text-zinc-400 hover:text-white hover:bg-white/5"}`}
+                  className={`p-2.5 rounded-lg transition-all duration-200 relative ${wishlistOpen ? "text-[#0055FE] bg-blue-50" : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"}`}
                 >
-                  <Heart className={`w-4.5 h-4.5 ${wishlistCount > 0 ? "fill-neon-red text-neon-red" : ""}`} />
+                  <Heart className={`w-4.5 h-4.5 ${wishlistCount > 0 ? "fill-[#0055FE] text-[#0055FE]" : ""}`} />
                   {wishlistCount > 0 && (
-                    <span className="absolute top-1 right-1 w-4 h-4 bg-neon-red text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                    <span className="absolute top-1 right-1 w-4 h-4 bg-[#0055FE] text-white text-[9px] font-bold rounded-full flex items-center justify-center">
                       {wishlistCount}
                     </span>
                   )}
@@ -293,38 +291,38 @@ export function Navbar() {
                 {/* Bell button */}
                 <button
                   onClick={toggleNotif}
-                  className={`p-2.5 rounded-lg transition-all duration-200 relative ${notifOpen ? "text-white bg-white/10" : "text-zinc-400 hover:text-white hover:bg-white/5"}`}
+                  className={`p-2.5 rounded-lg transition-all duration-200 relative ${notifOpen ? "text-[#0055FE] bg-blue-50" : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"}`}
                 >
                   <Bell className="w-4.5 h-4.5" />
                   {unreadCount > 0 && (
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-neon-red rounded-full" />
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FF6B00] rounded-full" />
                   )}
                 </button>
 
-                <div className="w-px h-6 bg-white/10 mx-1" />
+                <div className="w-px h-6 bg-gray-200 mx-2" />
 
                 {currentUser ? (
                   <div className="relative">
                     <button
                       onClick={toggleProfile}
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all duration-200 ${profileMenuOpen ? "bg-white/10" : "hover:bg-white/5"}`}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all duration-200 ${profileMenuOpen ? "bg-gray-50" : "hover:bg-gray-50"}`}
                     >
-                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-neon-red to-electric-blue flex items-center justify-center text-white text-xs font-bold shrink-0">
+                      <div className="w-7 h-7 rounded-full bg-[#0055FE] flex items-center justify-center text-white text-xs font-bold shrink-0">
                         {currentUser.name.charAt(0).toUpperCase()}
                       </div>
-                      <span className="text-sm font-medium text-white max-w-[100px] truncate">{currentUser.name.split(" ")[0]}</span>
-                      <ChevronDown className={`w-3.5 h-3.5 text-zinc-400 transition-transform ${profileMenuOpen ? "rotate-180" : ""}`} />
+                      <span className="text-sm font-medium text-gray-900 max-w-[100px] truncate">{currentUser.name.split(" ")[0]}</span>
+                      <ChevronDown className={`w-3.5 h-3.5 text-gray-500 transition-transform ${profileMenuOpen ? "rotate-180" : ""}`} />
                     </button>
 
                     {profileMenuOpen && (
-                      <div className="absolute right-0 top-full mt-2 w-52 bg-[#0f0f10] border border-white/10 rounded-2xl shadow-2xl shadow-black/60 py-2 animate-in slide-in-from-top-2 fade-in duration-150">
-                        <div className="px-4 py-3 border-b border-white/[0.06]">
-                          <p className="text-sm font-semibold text-white truncate">{currentUser.name}</p>
-                          <p className="text-xs text-zinc-500 truncate mt-0.5">{currentUser.email}</p>
+                      <div className="absolute right-0 top-full mt-2 w-52 bg-white border border-gray-200 rounded-2xl shadow-xl py-2 animate-in slide-in-from-top-2 fade-in duration-150">
+                        <div className="px-4 py-3 border-b border-gray-100">
+                          <p className="text-sm font-semibold text-gray-900 truncate">{currentUser.name}</p>
+                          <p className="text-xs text-gray-500 truncate mt-0.5">{currentUser.email}</p>
                         </div>
                         <button
                           onClick={handleLogout}
-                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-zinc-300 hover:text-neon-red hover:bg-white/5 transition-colors"
+                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-600 hover:text-[#0055FE] hover:bg-blue-50 transition-colors"
                         >
                           <LogOut className="w-4 h-4" />
                           Log Out
@@ -335,17 +333,17 @@ export function Navbar() {
                 ) : (
                   <>
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
                       onClick={() => openAuth("login")}
-                      className="text-zinc-300 hover:text-white hover:bg-white/5"
+                      className="border-[#0055FE] text-[#0055FE] hover:bg-blue-50 mr-2"
                     >
                       Login
                     </Button>
                     <Button
                       size="sm"
                       onClick={() => openAuth("signup")}
-                      className="bg-neon-red hover:bg-red-600 text-white font-semibold transition-all duration-300"
+                      className="bg-[#0055FE] hover:bg-blue-700 text-white font-semibold transition-all duration-300"
                     >
                       Signup
                     </Button>
@@ -353,57 +351,99 @@ export function Navbar() {
                 )}
               </div>
 
-              {/* Mobile Menu */}
-              <div className="lg:hidden flex items-center gap-2">
-                <button onClick={toggleSearch} className="p-2 text-zinc-400 hover:text-white transition-colors">
-                  <Search className="w-5 h-5" />
+              {/* Mobile Menu & Small Screen Actions */}
+              <div className="lg:hidden flex items-center gap-1">
+                {/* Search */}
+                <button
+                  onClick={toggleSearch}
+                  className={`p-2 rounded-lg transition-all duration-200 ${searchOpen ? "text-[#0055FE] bg-blue-50" : "text-gray-500 hover:text-gray-900"}`}
+                >
+                  <Search className="w-4.5 h-4.5" />
                 </button>
+
+                {/* Wishlist */}
+                <button
+                  onClick={toggleWishlist}
+                  className={`p-2 rounded-lg transition-all duration-200 relative ${wishlistOpen ? "text-[#0055FE] bg-blue-50" : "text-gray-500 hover:text-gray-900"}`}
+                >
+                  <Heart className={`w-4.5 h-4.5 ${wishlistCount > 0 ? "fill-[#0055FE] text-[#0055FE]" : ""}`} />
+                  {wishlistCount > 0 && (
+                    <span className="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-[#0055FE] text-white text-[8px] font-bold rounded-full flex items-center justify-center">
+                      {wishlistCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* Notifications */}
+                <button
+                  onClick={toggleNotif}
+                  className={`p-2 rounded-lg transition-all duration-200 relative ${notifOpen ? "text-[#0055FE] bg-blue-50" : "text-gray-500 hover:text-gray-900"}`}
+                >
+                  <Bell className="w-4.5 h-4.5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-[#FF6B00] rounded-full" />
+                  )}
+                </button>
+
+                {/* Profile menu icon if logged in */}
+                {currentUser && (
+                  <button
+                    onClick={toggleProfile}
+                    className={`p-1.5 rounded-full transition-all duration-200 ${profileMenuOpen ? "bg-gray-100" : ""}`}
+                  >
+                    <div className="w-6 h-6 rounded-full bg-[#0055FE] flex items-center justify-center text-white text-[10px] font-bold shrink-0">
+                      {currentUser.name.charAt(0).toUpperCase()}
+                    </div>
+                  </button>
+                )}
+
                 <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-                  <SheetTrigger className="p-2 text-zinc-400 hover:text-white transition-colors">
-                    <Menu className="w-5 h-5" />
+                  <SheetTrigger className="p-2 text-gray-500 hover:text-gray-900 transition-colors">
+                    <Menu className="w-4.5 h-4.5" />
                   </SheetTrigger>
-                  <SheetContent side="right" className="w-[300px] bg-[#09090b] border-white/10 p-0">
+                  <SheetContent side="right" className="w-[280px] bg-white border-l border-gray-200 p-0">
+                    <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
                     <div className="flex flex-col h-full">
-                      <div className="flex items-center justify-between p-4 border-b border-white/10">
+                      <div className="flex items-center justify-between p-4 border-b border-gray-100">
                         <Link href="/" className="flex items-center gap-2" onClick={() => setMobileOpen(false)}>
-                          <div className="w-8 h-8 rounded-lg bg-neon-red flex items-center justify-center">
+                          <div className="w-8 h-8 rounded-lg bg-[#0055FE] flex items-center justify-center">
                             <Car className="w-4 h-4 text-white" />
                           </div>
-                          <span className="text-lg font-bold text-white">Car<span className="text-neon-red">Fever</span></span>
+                          <span className="text-lg font-bold text-gray-900">Car<span className="text-[#0055FE]">Fever</span></span>
                         </Link>
                       </div>
-                      <div className="flex-1 overflow-y-auto py-4">
+                      <div className="flex-1 overflow-y-auto py-2">
                         {navLinks.map((link) => (
                           <div key={link.label}>
-                            <Link href={link.href} className="flex items-center justify-between px-6 py-3 text-zinc-300 hover:text-white hover:bg-white/5 transition-all" onClick={() => !link.children && setMobileOpen(false)}>
-                              <span className="font-medium">{link.label}</span>
+                            <Link href={link.href} className="flex items-center justify-between px-5 py-3 text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all text-sm font-medium" onClick={() => !link.children && setMobileOpen(false)}>
+                              <span>{link.label}</span>
                               {link.children && <ChevronDown className="w-4 h-4" />}
                             </Link>
                           </div>
                         ))}
                       </div>
-                      <div className="p-4 border-t border-white/10 space-y-3">
+                      <div className="p-4 border-t border-gray-100 space-y-2.5">
                         {currentUser ? (
                           <>
-                            <div className="flex items-center gap-2.5 px-1 py-2">
-                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-neon-red to-electric-blue flex items-center justify-center text-white text-xs font-bold">
+                            <div className="flex items-center gap-2.5 px-1 py-1.5">
+                              <div className="w-8 h-8 rounded-full bg-[#0055FE] flex items-center justify-center text-white text-xs font-bold">
                                 {currentUser.name.charAt(0).toUpperCase()}
                               </div>
                               <div className="min-w-0">
-                                <p className="text-sm font-semibold text-white truncate">{currentUser.name}</p>
-                                <p className="text-xs text-zinc-500 truncate">{currentUser.email}</p>
+                                <p className="text-sm font-semibold text-gray-900 truncate">{currentUser.name}</p>
+                                <p className="text-xs text-gray-500 truncate">{currentUser.email}</p>
                               </div>
                             </div>
-                            <Button variant="outline" className="w-full border-white/10 text-neon-red hover:bg-neon-red/10 gap-2" onClick={() => { setMobileOpen(false); handleLogout(); }}>
+                            <Button variant="outline" className="w-full h-11 border-gray-200 text-[#0055FE] hover:bg-blue-50 gap-2 text-sm" onClick={() => { setMobileOpen(false); handleLogout(); }}>
                               <LogOut className="w-4 h-4" /> Log Out
                             </Button>
                           </>
                         ) : (
                           <>
-                            <Button variant="outline" className="w-full border-white/10 text-white hover:bg-white/5" onClick={() => { setMobileOpen(false); openAuth("login"); }}>
+                            <Button variant="outline" className="w-full h-11 border-[#0055FE] text-[#0055FE] hover:bg-blue-50 text-sm" onClick={() => { setMobileOpen(false); openAuth("login"); }}>
                               Login
                             </Button>
-                            <Button className="w-full bg-neon-red hover:bg-red-600 text-white font-semibold" onClick={() => { setMobileOpen(false); openAuth("signup"); }}>
+                            <Button className="w-full h-11 bg-[#0055FE] hover:bg-blue-700 text-white font-semibold text-sm" onClick={() => { setMobileOpen(false); openAuth("signup"); }}>
                               Signup
                             </Button>
                           </>
@@ -416,13 +456,26 @@ export function Navbar() {
 
             </div>
           </div>
+
+          {/* Mobile Navigation Links Row (Directly visible) */}
+          <div className="lg:hidden flex items-center justify-around px-2 pb-2.5 pt-1.5 border-t border-gray-100">
+            {navLinks.map((link) => (
+              <Link
+                key={link.label}
+                href={link.href}
+                className="text-[13px] font-semibold text-gray-600 hover:text-[#0055FE] transition-colors px-2 py-1"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
         </nav>
 
         {/* ─── SEARCH BAR ─── */}
         {searchOpen && (
-          <div className="glass-heavy border-t border-white/[0.06] px-4 py-3 animate-in slide-in-from-top-2 duration-200">
+          <div className="bg-white border-b border-gray-200 px-4 py-3 animate-in slide-in-from-top-2 duration-200 shadow-md">
             <div className="max-w-2xl mx-auto relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
               <input
                 autoFocus
                 type="text"
@@ -435,57 +488,52 @@ export function Navbar() {
                     setSearchOpen(false);
                   }
                 }}
-                className="w-full pl-11 pr-10 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-electric-blue text-sm"
+                className="w-full pl-11 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#0055FE] text-sm"
               />
               {searchQuery ? (
                 <Link
                   href={`/buy-car?search=${encodeURIComponent(searchQuery)}`}
                   onClick={() => setSearchOpen(false)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 bg-electric-blue rounded-lg text-white hover:bg-blue-600 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 bg-[#0055FE] rounded-lg text-white hover:bg-blue-600 transition-colors"
                 >
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               ) : (
-                <button onClick={() => setSearchOpen(false)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-zinc-500 hover:text-white transition-colors">
+                <button onClick={() => setSearchOpen(false)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-900 transition-colors">
                   <X className="w-4 h-4" />
                 </button>
               )}
             </div>
-            {searchQuery && (
-              <div className="max-w-2xl mx-auto mt-2 text-xs text-zinc-500 px-1">
-                Press Enter or click <span className="text-electric-blue">→</span> to search in marketplace
-              </div>
-            )}
           </div>
         )}
       </header>
 
       {/* ─── WISHLIST PANEL ─── */}
       {wishlistOpen && (
-        <div className="fixed right-4 top-20 z-[60] w-80 bg-[#0f0f10] border border-white/10 rounded-2xl shadow-2xl shadow-black/60 animate-in slide-in-from-top-3 fade-in duration-200">
-          <div className="flex items-center justify-between p-4 border-b border-white/[0.06]">
+        <div className="fixed right-4 top-20 z-[60] w-80 bg-white border border-gray-200 rounded-2xl shadow-xl animate-in slide-in-from-top-3 fade-in duration-200">
+          <div className="flex items-center justify-between p-4 border-b border-gray-100">
             <div className="flex items-center gap-2">
-              <Heart className="w-4 h-4 text-neon-red fill-neon-red" />
-              <span className="text-sm font-bold text-white">Saved Cars</span>
-              <span className="text-xs text-zinc-500">({wishlistCount})</span>
+              <Heart className="w-4 h-4 text-[#0055FE] fill-[#0055FE]" />
+              <span className="text-sm font-bold text-gray-900">Saved Cars</span>
+              <span className="text-xs text-gray-500">({wishlistCount})</span>
             </div>
             <div className="flex items-center gap-2">
-              <Link href="/wishlist" onClick={() => setWishlistOpen(false)} className="text-xs text-electric-blue hover:text-blue-400 transition-colors font-medium">
+              <Link href="/wishlist" onClick={() => setWishlistOpen(false)} className="text-xs text-[#0055FE] hover:text-blue-700 transition-colors font-medium">
                 View All
               </Link>
-              <button onClick={() => setWishlistOpen(false)} className="p-1 text-zinc-500 hover:text-white transition-colors">
+              <button onClick={() => setWishlistOpen(false)} className="p-1 text-gray-400 hover:text-gray-900 transition-colors">
                 <X className="w-4 h-4" />
               </button>
             </div>
           </div>
 
           {wishlistCars.length === 0 ? (
-            <div className="p-8 text-center text-zinc-500">
+            <div className="p-8 text-center text-gray-500">
               <Heart className="w-12 h-12 mx-auto mb-3 opacity-20" />
-              <p className="text-sm font-medium text-zinc-300 mb-1">Your wishlist is empty</p>
-              <p className="text-xs text-zinc-500 mb-4">Click the heart icon on any car to save it</p>
+              <p className="text-sm font-medium text-gray-700 mb-1">Your wishlist is empty</p>
+              <p className="text-xs text-gray-400 mb-4">Click the heart icon on any car to save it</p>
               <Link href="/buy-car" onClick={() => setWishlistOpen(false)}>
-                <Button size="sm" className="bg-neon-red hover:bg-red-600 text-white text-xs">
+                <Button size="sm" className="bg-[#0055FE] hover:bg-blue-700 text-white text-xs">
                   Browse Cars
                 </Button>
               </Link>
@@ -493,23 +541,23 @@ export function Navbar() {
           ) : (
             <div className="p-2 space-y-2 max-h-[340px] overflow-y-auto">
               {wishlistCars.map((car) => (
-                <div key={car.id} className="flex gap-3 p-2 rounded-xl hover:bg-white/5 transition-colors group">
-                  <img src={car.image} className="w-20 h-14 rounded-lg object-cover shrink-0" alt={car.title} />
+                <div key={car.id} className="flex gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors group">
+                  <img src={car.image} className="w-20 h-14 rounded-lg object-cover shrink-0 border border-gray-100" alt={car.title} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-white truncate">{car.title}</p>
-                    <p className="text-xs text-neon-red font-bold mt-0.5">{car.priceDisplay}</p>
+                    <p className="text-sm font-semibold text-gray-900 truncate">{car.title}</p>
+                    <p className="text-xs text-[#0055FE] font-bold mt-0.5">{car.priceDisplay}</p>
                     <div className="flex items-center gap-1 mt-1">
-                      <MapPin className="w-3 h-3 text-zinc-500" />
-                      <span className="text-xs text-zinc-500">{car.location}</span>
+                      <MapPin className="w-3 h-3 text-gray-400" />
+                      <span className="text-xs text-gray-500">{car.location}</span>
                     </div>
                   </div>
                   <div className="flex flex-col gap-1 shrink-0">
-                    <Link href={`/buy-car/${car.id}`} onClick={() => setWishlistOpen(false)} className="p-1.5 text-zinc-500 hover:text-electric-blue transition-colors" title="View Details">
+                    <Link href={`/buy-car/${car.id}`} onClick={() => setWishlistOpen(false)} className="p-1.5 text-gray-400 hover:text-[#0055FE] transition-colors" title="View Details">
                       <ArrowRight className="w-3.5 h-3.5" />
                     </Link>
                     <button 
                       onClick={() => removeFromWishlist(car.id)} 
-                      className="p-1.5 text-zinc-500 hover:text-neon-red transition-colors"
+                      className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"
                       title="Remove from wishlist"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -519,59 +567,53 @@ export function Navbar() {
               ))}
             </div>
           )}
-
-          <div className="p-3 border-t border-white/[0.06]">
-            <Link href="/buy-car" onClick={() => setWishlistOpen(false)} className="block text-center text-xs text-electric-blue hover:text-blue-400 transition-colors font-medium">
-              Browse More Cars →
-            </Link>
-          </div>
         </div>
       )}
 
       {/* ─── NOTIFICATIONS PANEL ─── */}
       {notifOpen && (
-        <div className="fixed right-4 top-20 z-[60] w-80 bg-[#0f0f10] border border-white/10 rounded-2xl shadow-2xl shadow-black/60 animate-in slide-in-from-top-3 fade-in duration-200">
-          <div className="flex items-center justify-between p-4 border-b border-white/[0.06]">
+        <div className="fixed right-4 top-20 z-[60] w-80 bg-white border border-gray-200 rounded-2xl shadow-xl animate-in slide-in-from-top-3 fade-in duration-200">
+          <div className="flex items-center justify-between p-4 border-b border-gray-100">
             <div className="flex items-center gap-2">
-              <Bell className="w-4 h-4 text-white" />
-              <span className="text-sm font-bold text-white">Notifications</span>
+              <Bell className="w-4 h-4 text-gray-900" />
+              <span className="text-sm font-bold text-gray-900">Notifications</span>
               {unreadCount > 0 && (
-                <span className="text-[10px] font-bold bg-neon-red text-white px-1.5 py-0.5 rounded-full">{unreadCount}</span>
+                <span className="text-[10px] font-bold bg-[#FF6B00] text-white px-1.5 py-0.5 rounded-full">{unreadCount}</span>
               )}
             </div>
             <div className="flex items-center gap-1">
               {unreadCount > 0 && (
-                <button onClick={markAllRead} className="p-1 text-zinc-500 hover:text-electric-blue transition-colors" title="Mark all read">
+                <button onClick={markAllRead} className="p-1 text-gray-400 hover:text-[#0055FE] transition-colors" title="Mark all read">
                   <CheckCheck className="w-4 h-4" />
                 </button>
               )}
-              <button onClick={() => setNotifOpen(false)} className="p-1 text-zinc-500 hover:text-white transition-colors">
+              <button onClick={() => setNotifOpen(false)} className="p-1 text-gray-400 hover:text-gray-900 transition-colors">
                 <X className="w-4 h-4" />
               </button>
             </div>
           </div>
 
-          <div className="max-h-80 overflow-y-auto divide-y divide-white/[0.04]">
+          <div className="max-h-80 overflow-y-auto divide-y divide-gray-100">
             {notifications.map((n) => (
               <div
                 key={n.id}
                 onClick={() => setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, read: true } : x))}
-                className={`p-3 cursor-pointer hover:bg-white/5 transition-colors ${n.read ? "opacity-60" : ""}`}
+                className={`p-3 cursor-pointer hover:bg-gray-50 transition-colors ${n.read ? "opacity-60" : ""}`}
               >
                 <div className="flex gap-2.5">
-                  <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${!n.read ? "bg-electric-blue" : "bg-transparent"}`} />
+                  <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${!n.read ? "bg-[#0055FE]" : "bg-transparent"}`} />
                   <div>
-                    <p className={`text-xs font-semibold ${n.read ? "text-zinc-400" : "text-white"}`}>{n.title}</p>
-                    <p className="text-xs text-zinc-500 mt-0.5 leading-relaxed">{n.body}</p>
-                    <p className="text-[10px] text-zinc-600 mt-1">{n.time}</p>
+                    <p className={`text-xs font-semibold ${n.read ? "text-gray-500" : "text-gray-900"}`}>{n.title}</p>
+                    <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{n.body}</p>
+                    <p className="text-[10px] text-gray-400 mt-1">{n.time}</p>
                   </div>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="p-3 border-t border-white/[0.06]">
-            <button onClick={() => setNotifications([])} className="w-full text-center text-xs text-zinc-500 hover:text-zinc-300 transition-colors flex items-center justify-center gap-1.5">
+          <div className="p-3 border-t border-gray-100">
+            <button onClick={() => setNotifications([])} className="w-full text-center text-xs text-gray-500 hover:text-gray-700 transition-colors flex items-center justify-center gap-1.5">
               <BellOff className="w-3.5 h-3.5" />
               Clear all notifications
             </button>
@@ -582,132 +624,128 @@ export function Navbar() {
       {/* ─── AUTH MODAL ─── */}
       {authModal && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-          {/* Backdrop */}
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => { setAuthModal(null); setAuthSuccess(false); setAuthErrors({}); }} />
+          <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onClick={() => { setAuthModal(null); setAuthSuccess(false); setAuthErrors({}); }} />
 
-          {/* Modal */}
-          <div className="relative w-full max-w-md bg-[#0f0f10] border border-white/10 rounded-3xl p-8 shadow-2xl animate-in zoom-in-95 fade-in duration-200">
-            <button onClick={() => { setAuthModal(null); setAuthSuccess(false); setAuthErrors({}); }} className="absolute top-4 right-4 p-2 text-zinc-500 hover:text-white transition-colors rounded-lg hover:bg-white/5">
+          <div className="relative w-full max-w-md bg-white border border-gray-200 rounded-2xl p-8 shadow-2xl animate-in zoom-in-95 fade-in duration-200">
+            <button onClick={() => { setAuthModal(null); setAuthSuccess(false); setAuthErrors({}); }} className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-900 transition-colors rounded-lg hover:bg-gray-50">
               <X className="w-4 h-4" />
             </button>
 
             {authSuccess ? (
               <div className="text-center py-8 space-y-4">
-                <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/30 rounded-full flex items-center justify-center mx-auto">
-                  <CheckCircle2 className="w-9 h-9 text-emerald-400" />
+                <div className="w-16 h-16 bg-[#00B67A]/10 border border-[#00B67A]/30 rounded-full flex items-center justify-center mx-auto">
+                  <CheckCircle2 className="w-9 h-9 text-[#00B67A]" />
                 </div>
-                <h2 className="text-xl font-bold text-white">
+                <h2 className="text-xl font-bold text-gray-900">
                   {authModal === "login" ? `Welcome back, ${currentUser?.name.split(" ")[0]}!` : `Welcome, ${currentUser?.name.split(" ")[0]}!`}
                 </h2>
-                <p className="text-zinc-400 text-sm">
+                <p className="text-gray-500 text-sm">
                   {authModal === "login" ? "You are now signed in to CarFever." : "Your account has been created successfully!"}
                 </p>
               </div>
             ) : (
               <>
-                {/* Header */}
                 <div className="text-center mb-6">
-                  <div className="w-12 h-12 rounded-xl bg-neon-red flex items-center justify-center mx-auto mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-[#0055FE] flex items-center justify-center mx-auto mb-4">
                     <Car className="w-6 h-6 text-white" />
                   </div>
-                  <h2 className="text-2xl font-bold text-white">
+                  <h2 className="text-2xl font-bold text-gray-900">
                     {authModal === "login" ? "Welcome Back" : "Create Account"}
                   </h2>
-                  <p className="text-zinc-400 text-sm mt-1">
-                    {authModal === "login" ? "Sign in to your CarFever account" : "Join Pakistan's premium car marketplace"}
+                  <p className="text-gray-500 text-sm mt-1">
+                    {authModal === "login" ? "Sign in to your CarFever account" : "Join our premium car marketplace"}
                   </p>
                 </div>
 
-                {/* General error */}
                 {authErrors.general && (
-                  <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 mb-4">
-                    <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
-                    <p className="text-xs text-red-400">{authErrors.general}</p>
+                  <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-4">
+                    <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+                    <p className="text-xs text-red-600">{authErrors.general}</p>
                   </div>
                 )}
 
                 <form onSubmit={handleAuthSubmit} className="space-y-4">
                   {authModal === "signup" && (
                     <div>
-                      <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">Full Name</label>
+                      <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1.5">Full Name</label>
                       <div className="relative">
-                        <User className="absolute left-3.5 top-3.5 w-4 h-4 text-zinc-500" />
+                        <User className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-400" />
                         <input
                           type="text"
                           name="name"
                           placeholder="e.g. Ali Ahmed"
                           value={authData.name}
                           onChange={handleAuthChange}
-                          className={`w-full pl-10 pr-4 py-3 bg-white/5 border rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:ring-1 transition-all text-sm ${
-                            authErrors.name ? "border-red-500 focus:ring-red-500" : "border-white/10 focus:ring-neon-red"
+                          className={`w-full pl-10 pr-4 py-3 bg-gray-50 border rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 transition-all text-sm ${
+                            authErrors.name ? "border-red-500 focus:ring-red-500" : "border-gray-200 focus:ring-[#0055FE]"
                           }`}
                         />
                       </div>
-                      {authErrors.name && <p className="text-xs text-red-400 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{authErrors.name}</p>}
+                      {authErrors.name && <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{authErrors.name}</p>}
                     </div>
                   )}
 
                   <div>
-                    <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">Email Address</label>
+                    <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1.5">Email Address</label>
                     <div className="relative">
-                      <Mail className="absolute left-3.5 top-3.5 w-4 h-4 text-zinc-500" />
+                      <Mail className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-400" />
                       <input
                         type="text"
                         name="email"
                         placeholder="you@example.com"
                         value={authData.email}
                         onChange={handleAuthChange}
-                        className={`w-full pl-10 pr-4 py-3 bg-white/5 border rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:ring-1 transition-all text-sm ${
-                          authErrors.email ? "border-red-500 focus:ring-red-500" : "border-white/10 focus:ring-neon-red"
+                        className={`w-full pl-10 pr-4 py-3 bg-gray-50 border rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 transition-all text-sm ${
+                          authErrors.email ? "border-red-500 focus:ring-red-500" : "border-gray-200 focus:ring-[#0055FE]"
                         }`}
                       />
                     </div>
-                    {authErrors.email && <p className="text-xs text-red-400 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{authErrors.email}</p>}
+                    {authErrors.email && <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{authErrors.email}</p>}
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">Password</label>
+                    <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1.5">Password</label>
                     <div className="relative">
-                      <Lock className="absolute left-3.5 top-3.5 w-4 h-4 text-zinc-500" />
+                      <Lock className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-400" />
                       <input
                         type={showPassword ? "text" : "password"}
                         name="password"
                         placeholder="Min. 6 characters"
                         value={authData.password}
                         onChange={handleAuthChange}
-                        className={`w-full pl-10 pr-10 py-3 bg-white/5 border rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:ring-1 transition-all text-sm ${
-                          authErrors.password ? "border-red-500 focus:ring-red-500" : "border-white/10 focus:ring-neon-red"
+                        className={`w-full pl-10 pr-10 py-3 bg-gray-50 border rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 transition-all text-sm ${
+                          authErrors.password ? "border-red-500 focus:ring-red-500" : "border-gray-200 focus:ring-[#0055FE]"
                         }`}
                       />
-                      <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3.5 top-3.5 text-zinc-500 hover:text-white transition-colors">
+                      <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3.5 top-3.5 text-gray-400 hover:text-gray-600 transition-colors">
                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
-                    {authErrors.password && <p className="text-xs text-red-400 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{authErrors.password}</p>}
+                    {authErrors.password && <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{authErrors.password}</p>}
                     {authModal === "login" && !authErrors.password && (
                       <div className="text-right mt-1.5">
-                        <button type="button" className="text-xs text-electric-blue hover:text-blue-400 transition-colors">Forgot password?</button>
+                        <button type="button" className="text-xs text-[#0055FE] hover:text-blue-700 transition-colors">Forgot password?</button>
                       </div>
                     )}
                   </div>
 
                   <Button
                     type="submit"
-                    className="w-full bg-neon-red hover:bg-red-600 text-white font-bold h-12 mt-2 transition-colors"
+                    className="w-full bg-[#0055FE] hover:bg-blue-700 text-white font-bold h-12 mt-2 transition-colors"
                   >
                     {authModal === "login" ? "Sign In" : "Create Account"}
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </form>
 
-                <div className="mt-5 text-center text-sm text-zinc-500">
+                <div className="mt-5 text-center text-sm text-gray-500">
                   {authModal === "login" ? (
                     <>Don&apos;t have an account?{" "}
-                      <button onClick={() => openAuth("signup")} className="text-neon-red hover:text-red-400 font-semibold transition-colors">Sign up free</button>
+                      <button onClick={() => openAuth("signup")} className="text-[#0055FE] hover:text-blue-700 font-semibold transition-colors">Sign up free</button>
                     </>
                   ) : (
                     <>Already have an account?{" "}
-                      <button onClick={() => openAuth("login")} className="text-neon-red hover:text-red-400 font-semibold transition-colors">Sign in</button>
+                      <button onClick={() => openAuth("login")} className="text-[#0055FE] hover:text-blue-700 font-semibold transition-colors">Sign in</button>
                     </>
                   )}
                 </div>
@@ -724,4 +762,3 @@ export function Navbar() {
     </>
   );
 }
-

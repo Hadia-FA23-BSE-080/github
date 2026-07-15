@@ -1,94 +1,135 @@
-"use client";
+'use client';
 
-import { useState, useEffect, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
-import { Navbar } from "@/components/navbar";
-import { Footer } from "@/components/footer";
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Badge } from "@/components/ui/badge";
-import { 
-  SlidersHorizontal, 
-  ChevronDown, 
-  Heart, 
-  Fuel, 
-  Gauge, 
-  Calendar, 
-  ChevronLeft, 
-  ChevronRight, 
+import { useState, useEffect, useTransition, useCallback, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { Navbar } from '@/components/navbar';
+import { Footer } from '@/components/footer';
+import { Button } from '@/components/ui/button';
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
+import { Badge } from '@/components/ui/badge';
+import {
+  SlidersHorizontal,
+  Heart,
+  Fuel,
+  Gauge,
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
   X,
-  Search,
-  Car
-} from "lucide-react";
-import Link from "next/link";
-import { getAllCars, CarListing } from "@/lib/car-data";
-import { isInWishlist, addToWishlist, removeFromWishlist } from "@/lib/wishlist";
+  Car,
+  Loader2,
+} from 'lucide-react';
+import Link from 'next/link';
+import { isInWishlist, addToWishlist, removeFromWishlist } from '@/lib/wishlist';
+import { fetchApprovedCars, type ApprovedCar, type FetchCarsFilters } from '@/lib/server-actions';
 
-function CarCard({ car }: { car: CarListing }) {
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function formatPrice(price: number, priceDisplay: string | null): string {
+  if (priceDisplay) return priceDisplay;
+  const lacs = price / 100000;
+  return `PKR ${lacs % 1 === 0 ? lacs.toFixed(0) : lacs.toFixed(1)} Lacs`;
+}
+
+function formatMileage(km: number | null): string {
+  if (!km) return 'N/A';
+  return `${km.toLocaleString()} km`;
+}
+
+// ─── Car Card ─────────────────────────────────────────────────────────────────
+
+function CarCard({ car }: { car: ApprovedCar }) {
   const [isWishlisted, setIsWishlisted] = useState(false);
 
   useEffect(() => {
-    setIsWishlisted(isInWishlist(car.id));
-    const handleUpdate = () => setIsWishlisted(isInWishlist(car.id));
-    window.addEventListener("wishlist-updated", handleUpdate);
-    return () => window.removeEventListener("wishlist-updated", handleUpdate);
+    setIsWishlisted(isInWishlist(car.id as any));
+    const handleUpdate = () => setIsWishlisted(isInWishlist(car.id as any));
+    window.addEventListener('wishlist-updated', handleUpdate);
+    return () => window.removeEventListener('wishlist-updated', handleUpdate);
   }, [car.id]);
 
   const handleWishlistToggle = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (isWishlisted) {
-      removeFromWishlist(car.id);
+      removeFromWishlist(car.id as any);
     } else {
-      addToWishlist(car.id);
+      addToWishlist(car.id as any);
     }
   };
 
+  const images: string[] = Array.isArray(car.images) ? car.images : [];
+  const primaryImage =
+    images[0] ||
+    'https://images.unsplash.com/photo-1550355291-bbee04a92027?auto=format&fit=crop&w=600&q=80';
+
   return (
-    <div className="group rounded-2xl overflow-hidden bg-card border border-white/[0.06] hover:border-white/[0.12] transition-all duration-300 hover:shadow-2xl hover:shadow-neon-red/5 flex flex-col">
+    <div className="group rounded-lg overflow-hidden bg-white border border-gray-200 transition-all duration-300 hover:shadow-md hover:-translate-y-1 flex flex-col">
       <div className="relative aspect-[16/11] overflow-hidden shrink-0">
         <img
-          src={car.image}
+          src={primaryImage}
           alt={car.title}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+        {car.badge && (
+          <span className="absolute top-3 left-3 px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full bg-[#0055FE] text-white">
+            {car.badge}
+          </span>
+        )}
         <button
           onClick={handleWishlistToggle}
-          className={`absolute top-3 right-3 p-2 rounded-full bg-black/40 backdrop-blur-sm transition-all duration-200 active:scale-90 ${
-            isWishlisted ? "text-neon-red scale-105" : "text-white/70 hover:text-neon-red hover:bg-black/60"
+          className={`absolute top-3 right-3 p-2 rounded-full bg-white/80 backdrop-blur-sm transition-all duration-200 active:scale-90 ${
+            isWishlisted
+              ? 'text-[#0055FE] scale-105'
+              : 'text-gray-500 hover:text-[#0055FE] hover:bg-white'
           }`}
         >
-          <Heart className={`w-4 h-4 transition-all duration-200 ${isWishlisted ? "fill-neon-red text-neon-red" : ""}`} />
+          <Heart
+            className={`w-4 h-4 transition-all duration-200 ${isWishlisted ? 'fill-[#0055FE] text-[#0055FE]' : ''}`}
+          />
         </button>
       </div>
 
       <div className="p-5 flex flex-col flex-1">
-        <h3 className="text-base font-semibold text-white group-hover:text-neon-red transition-colors duration-300 mb-4 line-clamp-1">
+        <h3 className="text-base font-semibold text-gray-900 group-hover:text-[#0055FE] transition-colors duration-300 mb-4 line-clamp-1">
           {car.title}
         </h3>
-        
-        <div className="grid grid-cols-2 gap-3 mb-5 text-zinc-400">
-          <div className="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-2">
-            <Calendar className="w-4 h-4 text-neon-red shrink-0" />
-            <span className="text-xs font-medium">{car.year}</span>
+
+        <div className="grid grid-cols-2 gap-3 mb-5 text-gray-500">
+          <div className="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2">
+            <Calendar className="w-4 h-4 text-gray-400 shrink-0" />
+            <span className="text-xs font-medium text-gray-700">{car.year}</span>
           </div>
-          <div className="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-2">
-            <Gauge className="w-4 h-4 text-electric-blue shrink-0" />
-            <span className="text-xs font-medium truncate">{car.mileage}</span>
+          <div className="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2">
+            <Gauge className="w-4 h-4 text-gray-400 shrink-0" />
+            <span className="text-xs font-medium text-gray-700 truncate">
+              {formatMileage(car.mileage)}
+            </span>
           </div>
-          <div className="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-2 col-span-2">
-            <Fuel className="w-4 h-4 text-emerald-500 shrink-0" />
-            <span className="text-xs font-medium">{car.fuel}</span>
+          <div className="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 col-span-2">
+            <Fuel className="w-4 h-4 text-gray-400 shrink-0" />
+            <span className="text-xs font-medium text-gray-700">
+              {car.fuel_type || 'Petrol'}
+            </span>
           </div>
         </div>
 
-        <div className="mt-auto pt-4 border-t border-white/[0.06] flex items-center justify-between">
-          <span className="text-lg font-bold text-white drop-shadow-lg">
-            {car.priceDisplay}
+        <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between">
+          <span className="text-lg font-bold text-[#0055FE]">
+            {formatPrice(car.price, car.price_display)}
           </span>
           <Link href={`/buy-car/${car.id}`} suppressHydrationWarning>
-            <Button size="sm" className="bg-neon-red hover:bg-red-600 text-white glow-red-subtle">
+            <Button
+              size="sm"
+              className="border border-[#0055FE] text-[#0055FE] hover:bg-blue-50 bg-white"
+            >
               View Details
             </Button>
           </Link>
@@ -98,15 +139,39 @@ function CarCard({ car }: { car: CarListing }) {
   );
 }
 
+// ─── Skeleton Card ────────────────────────────────────────────────────────────
+
+function SkeletonCard() {
+  return (
+    <div className="rounded-lg overflow-hidden bg-white border border-gray-200 flex flex-col animate-pulse">
+      <div className="aspect-[16/11] bg-gray-200" />
+      <div className="p-5 flex flex-col flex-1 gap-4">
+        <div className="h-4 bg-gray-200 rounded w-3/4" />
+        <div className="grid grid-cols-2 gap-3">
+          <div className="h-9 bg-gray-100 rounded-lg" />
+          <div className="h-9 bg-gray-100 rounded-lg" />
+          <div className="h-9 bg-gray-100 rounded-lg col-span-2" />
+        </div>
+        <div className="flex justify-between items-center pt-3 mt-auto border-t border-gray-100">
+          <div className="h-6 bg-gray-200 rounded w-24" />
+          <div className="h-8 bg-gray-100 rounded w-20" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Filter Sidebar ───────────────────────────────────────────────────────────
+
 interface FilterSidebarProps {
   selectedMake: string | null;
-  setSelectedMake: (make: string | null) => void;
+  setSelectedMake: (v: string | null) => void;
   maxPrice: number;
-  setMaxPrice: (price: number) => void;
+  setMaxPrice: (v: number) => void;
   selectedYear: string | null;
-  setSelectedYear: (year: string | null) => void;
+  setSelectedYear: (v: string | null) => void;
   selectedFuel: string[];
-  setSelectedFuel: (fuel: string[]) => void;
+  setSelectedFuel: (v: string[]) => void;
   onReset: () => void;
 }
 
@@ -121,8 +186,8 @@ function FilterSidebar({
   setSelectedFuel,
   onReset,
 }: FilterSidebarProps) {
-  const makes = ["Toyota", "Honda", "Suzuki", "KIA", "Hyundai", "Tesla"];
-  const fuelTypes = ["Petrol", "Diesel", "Hybrid", "Electric"];
+  const makes = ['Toyota', 'Honda', 'Suzuki', 'KIA', 'Hyundai', 'Tesla'];
+  const fuelTypes = ['Petrol', 'Diesel', 'Hybrid', 'Electric'];
 
   const handleFuelToggle = (fuel: string, checked: boolean) => {
     if (checked) {
@@ -134,91 +199,104 @@ function FilterSidebar({
 
   return (
     <div className="space-y-8">
-      {/* Search Make */}
+      {/* Make */}
       <div>
-        <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Make / Brand</h3>
-        <select 
-          value={selectedMake || ""} 
+        <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4">
+          Make / Brand
+        </h3>
+        <select
+          value={selectedMake || ''}
           onChange={(e) => setSelectedMake(e.target.value || null)}
-          className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-zinc-300 hover:bg-white/8 transition-colors focus:ring-1 focus:ring-neon-red focus:outline-none appearance-none cursor-pointer"
+          className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 hover:bg-gray-100 transition-colors focus:ring-1 focus:ring-[#0055FE] focus:border-[#0055FE] focus:outline-none appearance-none cursor-pointer"
         >
-          <option value="" className="bg-zinc-950">All Makes</option>
-          {makes.map(m => (
-            <option key={m} value={m} className="bg-zinc-950">{m}</option>
+          <option value="">All Makes</option>
+          {makes.map((m) => (
+            <option key={m} value={m}>
+              {m}
+            </option>
           ))}
         </select>
       </div>
 
-      <div className="h-px w-full bg-white/10" />
+      <div className="h-px w-full bg-gray-200" />
 
-      {/* Price Range */}
+      {/* Price */}
       <div>
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-sm font-bold text-white uppercase tracking-wider">Max Price</h3>
-          <span className="text-xs font-bold text-neon-red bg-neon-red/10 px-2 py-0.5 rounded">
-            {(maxPrice / 100000).toFixed(1)} Lacs
+          <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">
+            Max Price
+          </h3>
+          <span className="text-xs font-bold text-[#0055FE] bg-[#0055FE]/10 px-2 py-0.5 rounded">
+            {(maxPrice / 100000).toFixed(0)} Lacs
           </span>
         </div>
-        <input 
-          type="range" 
-          min="1000000" 
-          max="20000000" 
+        <input
+          type="range"
+          min="1000000"
+          max="20000000"
           step="500000"
           value={maxPrice}
           onChange={(e) => setMaxPrice(Number(e.target.value))}
-          className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-neon-red"
+          className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#0055FE]"
         />
-        <div className="flex justify-between items-center mt-3 text-xs text-zinc-400">
+        <div className="flex justify-between items-center mt-3 text-xs text-gray-500">
           <span>10 Lacs</span>
           <span>2 Crore+</span>
         </div>
       </div>
 
-      <div className="h-px w-full bg-white/10" />
+      <div className="h-px w-full bg-gray-200" />
 
       {/* Year */}
       <div>
-        <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Model Year</h3>
-        <select 
-          value={selectedYear || ""} 
+        <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4">
+          Model Year
+        </h3>
+        <select
+          value={selectedYear || ''}
           onChange={(e) => setSelectedYear(e.target.value || null)}
-          className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-zinc-300 hover:bg-white/8 transition-colors focus:ring-1 focus:ring-neon-red focus:outline-none appearance-none cursor-pointer"
+          className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 hover:bg-gray-100 transition-colors focus:ring-1 focus:ring-[#0055FE] focus:border-[#0055FE] focus:outline-none appearance-none cursor-pointer"
         >
-          <option value="" className="bg-zinc-950">Any Year</option>
-          <option value="2024" className="bg-zinc-950">2024</option>
-          <option value="2023" className="bg-zinc-950">2023</option>
-          <option value="2022" className="bg-zinc-950">2022</option>
-          <option value="2021" className="bg-zinc-950">2021</option>
-          <option value="2020" className="bg-zinc-950">2020</option>
+          <option value="">Any Year</option>
+          {[2025, 2024, 2023, 2022, 2021, 2020].map((yr) => (
+            <option key={yr} value={yr}>
+              {yr}
+            </option>
+          ))}
         </select>
       </div>
 
-      <div className="h-px w-full bg-white/10" />
+      <div className="h-px w-full bg-gray-200" />
 
-      {/* Fuel Type */}
+      {/* Fuel */}
       <div>
-        <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Fuel Type</h3>
+        <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4">
+          Fuel Type
+        </h3>
         <div className="space-y-3">
           {fuelTypes.map((fuel) => {
             const isChecked = selectedFuel.includes(fuel);
             return (
               <label key={fuel} className="flex items-center gap-3 cursor-pointer group">
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   checked={isChecked}
                   onChange={(e) => handleFuelToggle(fuel, e.target.checked)}
-                  className="w-4 h-4 rounded border-white/20 bg-white/5 text-neon-red focus:ring-neon-red focus:ring-offset-background" 
+                  className="w-4 h-4 rounded border-gray-300 bg-white text-[#0055FE] focus:ring-[#0055FE] focus:ring-offset-white"
                 />
-                <span className="text-sm text-zinc-400 group-hover:text-white transition-colors">{fuel}</span>
+                <span className="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">
+                  {fuel}
+                </span>
               </label>
             );
           })}
         </div>
       </div>
 
-      <Button 
+      <Button
         onClick={onReset}
-        className="w-full bg-white/5 hover:bg-white/10 text-white border border-white/10 mt-4 transition-colors"
+        variant="outline"
+        className="w-full border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 mt-4 transition-colors"
       >
         Reset Filters
       </Button>
@@ -226,107 +304,115 @@ function FilterSidebar({
   );
 }
 
+// ─── Main Content ─────────────────────────────────────────────────────────────
+
+const ITEMS_PER_PAGE = 6;
+const MAX_PRICE = 20000000;
+
 function BuyCarContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  
+  const [isPending, startTransition] = useTransition();
+
   const [selectedMake, setSelectedMake] = useState<string | null>(null);
-  const [maxPrice, setMaxPrice] = useState<number>(20000000);
+  const [maxPrice, setMaxPrice] = useState<number>(MAX_PRICE);
   const [selectedYear, setSelectedYear] = useState<string | null>(null);
   const [selectedFuel, setSelectedFuel] = useState<string[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState("newest");
-
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<FetchCarsFilters['sortBy']>('newest');
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 6;
 
-  // Sync URL search param
-  const urlSearch = searchParams?.get("search") || "";
+  const [cars, setCars] = useState<ApprovedCar[]>([]);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  // Sync URL search param on mount
   useEffect(() => {
-    if (urlSearch) {
-      setSearchQuery(urlSearch);
-    }
-  }, [urlSearch]);
+    const q = searchParams?.get('search') || '';
+    if (q) setSearchQuery(q);
+  }, [searchParams]);
 
-  const handleResetFilters = () => {
-    setSelectedMake(null);
-    setMaxPrice(20000000);
-    setSelectedYear(null);
-    setSelectedFuel([]);
-    setSearchQuery("");
-    setCurrentPage(1);
-    // clear query param
-    router.push("/buy-car");
-  };
+  const loadCars = useCallback(() => {
+    setLoading(true);
+    startTransition(async () => {
+      const result = await fetchApprovedCars({
+        make: selectedMake,
+        maxPrice: maxPrice < MAX_PRICE ? maxPrice : null,
+        year: selectedYear ? parseInt(selectedYear) : null,
+        fuelType: selectedFuel.length === 1 ? selectedFuel[0] : null,
+        search: searchQuery || null,
+        sortBy,
+        page: currentPage,
+        limit: ITEMS_PER_PAGE,
+      });
+      setCars(result.cars);
+      setTotal(result.total);
+      setTotalPages(result.totalPages);
+      setLoading(false);
+    });
+  }, [selectedMake, maxPrice, selectedYear, selectedFuel, searchQuery, sortBy, currentPage]);
 
-  const handleRemoveFuel = (fuel: string) => {
-    setSelectedFuel(selectedFuel.filter(f => f !== fuel));
-  };
+  useEffect(() => {
+    loadCars();
+  }, [loadCars]);
 
-  const hasActiveFilters = selectedMake || maxPrice < 20000000 || selectedYear || selectedFuel.length > 0 || searchQuery;
-
-  // Filter listings
-  const allCars = getAllCars();
-  const filteredCars = allCars.filter((car) => {
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      const matchTitle = car.title.toLowerCase().includes(q);
-      const matchMake = car.make.toLowerCase().includes(q);
-      const matchModel = car.model.toLowerCase().includes(q);
-      if (!matchTitle && !matchMake && !matchModel) return false;
-    }
-    if (selectedMake && car.make !== selectedMake) return false;
-    if (car.price > maxPrice) return false;
-    if (selectedYear && car.year.toString() !== selectedYear) return false;
-    if (selectedFuel.length > 0 && !selectedFuel.includes(car.fuel)) return false;
-    return true;
-  });
-
-  // Sort listings
-  const sortedCars = [...filteredCars].sort((a, b) => {
-    if (sortBy === "price-asc") return a.price - b.price;
-    if (sortBy === "price-desc") return b.price - a.price;
-    if (sortBy === "year-desc") return b.year - a.year;
-    return b.year - a.year; // newest first
-  });
-
-  // Pagination
-  const totalPages = Math.ceil(sortedCars.length / ITEMS_PER_PAGE);
-  const displayedCars = sortedCars.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-
-  // Reset page to 1 when filters change
+  // Reset page when filters change (not on page change itself)
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedMake, maxPrice, selectedYear, selectedFuel, searchQuery, sortBy]);
 
+  const handleResetFilters = () => {
+    setSelectedMake(null);
+    setMaxPrice(MAX_PRICE);
+    setSelectedYear(null);
+    setSelectedFuel([]);
+    setSearchQuery('');
+    setCurrentPage(1);
+    router.push('/buy-car');
+  };
+
+  const hasActiveFilters =
+    selectedMake ||
+    maxPrice < MAX_PRICE ||
+    selectedYear ||
+    selectedFuel.length > 0 ||
+    searchQuery;
+
+  const isLoadingState = loading || isPending;
+
   return (
     <>
       <Navbar />
-      <main className="min-h-screen pt-24 pb-20 bg-[#09090b]">
+      <main className="min-h-screen pt-32 lg:pt-24 pb-20 bg-[#F8F9FA]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
+
           {/* Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4 border-b border-white/10 pb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4 border-b border-gray-200 pb-6">
             <div>
-              <h1 className="text-3xl font-bold text-white mb-2">Browse Cars</h1>
-              <p className="text-zinc-400 text-sm">Find the perfect vehicle that fits your lifestyle.</p>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Browse Cars</h1>
+              <p className="text-gray-500 text-sm">Find the perfect vehicle that fits your lifestyle.</p>
             </div>
 
-            {/* Mobile Filter Trigger */}
-            <div className="flex gap-3 w-full sm:w-auto">
-              <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
-                <SheetTrigger 
-                  render={<Button variant="outline" className="flex lg:hidden border-white/10 text-white bg-white/5 hover:bg-white/10" />}
-                >
-                  <SlidersHorizontal className="w-4 h-4 mr-2" />
-                  Filters
-                </SheetTrigger>
-                <SheetContent side="left" className="w-[300px] bg-[#09090b] border-r-white/10 p-6 overflow-y-auto">
-                  <SheetHeader className="mb-6">
-                    <SheetTitle className="text-white text-left">Filter Inventory</SheetTitle>
-                  </SheetHeader>
-                  <FilterSidebar 
+            <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
+              <SheetTrigger
+                render={
+                  <Button
+                    variant="outline"
+                    className="flex lg:hidden border-gray-300 text-gray-700 bg-white hover:bg-gray-50 w-full sm:w-auto h-11 font-medium"
+                  />
+                }
+              >
+                <SlidersHorizontal className="w-4 h-4 mr-2" />
+                Filters
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[300px] bg-white border-l border-gray-200 p-6 overflow-y-auto">
+                <SheetHeader className="mb-6 px-0">
+                  <SheetTitle className="text-gray-900 text-left text-lg font-bold">Filter Inventory</SheetTitle>
+                </SheetHeader>
+                <div className="flex flex-col gap-6">
+                  <FilterSidebar
                     selectedMake={selectedMake}
                     setSelectedMake={setSelectedMake}
                     maxPrice={maxPrice}
@@ -337,17 +423,23 @@ function BuyCarContent() {
                     setSelectedFuel={setSelectedFuel}
                     onReset={handleResetFilters}
                   />
-                </SheetContent>
-              </Sheet>
-            </div>
+                  <Button
+                    onClick={() => setMobileFiltersOpen(false)}
+                    className="w-full bg-[#0055FE] hover:bg-blue-700 text-white font-bold h-11"
+                  >
+                    Apply Filters
+                  </Button>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
 
           <div className="flex flex-col lg:flex-row gap-8">
-            
+
             {/* Desktop Sidebar */}
             <aside className="hidden lg:block w-1/4 shrink-0">
-              <div className="sticky top-24 bg-zinc-900 border border-white/10 p-6 rounded-2xl">
-                <FilterSidebar 
+              <div className="sticky top-28 bg-white border border-gray-200 shadow-sm p-6 rounded-xl">
+                <FilterSidebar
                   selectedMake={selectedMake}
                   setSelectedMake={setSelectedMake}
                   maxPrice={maxPrice}
@@ -363,61 +455,61 @@ function BuyCarContent() {
 
             {/* Main Area */}
             <div className="w-full lg:w-3/4">
-              
-              {/* Active Badges Panel */}
+
+              {/* Active Filter Badges */}
               {hasActiveFilters && (
-                <div className="flex flex-wrap gap-2 items-center mb-4 bg-white/5 p-3 rounded-xl border border-white/5">
-                  <span className="text-xs font-semibold text-zinc-400 mr-2">Active Filters:</span>
+                <div className="flex flex-wrap gap-2 items-center mb-4 bg-white p-3 rounded-xl border border-gray-200 shadow-sm">
+                  <span className="text-xs font-semibold text-gray-500 mr-2">Active Filters:</span>
                   {searchQuery && (
-                    <Badge variant="outline" className="flex items-center gap-1.5 border-white/20 text-zinc-300 pl-2 pr-1.5 py-1">
-                      Query: &quot;{searchQuery}&quot;
-                      <button onClick={() => setSearchQuery("")} className="hover:text-white"><X className="w-3.5 h-3.5" /></button>
+                    <Badge variant="outline" className="flex items-center gap-1.5 border-gray-200 text-gray-700 pl-2 pr-1.5 py-1 bg-gray-50">
+                      Search: &quot;{searchQuery}&quot;
+                      <button onClick={() => setSearchQuery('')} className="hover:text-red-500"><X className="w-3.5 h-3.5" /></button>
                     </Badge>
                   )}
                   {selectedMake && (
-                    <Badge variant="outline" className="flex items-center gap-1.5 border-white/20 text-zinc-300 pl-2 pr-1.5 py-1">
+                    <Badge variant="outline" className="flex items-center gap-1.5 border-gray-200 text-gray-700 pl-2 pr-1.5 py-1 bg-gray-50">
                       Make: {selectedMake}
-                      <button onClick={() => setSelectedMake(null)} className="hover:text-white"><X className="w-3.5 h-3.5" /></button>
+                      <button onClick={() => setSelectedMake(null)} className="hover:text-red-500"><X className="w-3.5 h-3.5" /></button>
                     </Badge>
                   )}
-                  {maxPrice < 20000000 && (
-                    <Badge variant="outline" className="flex items-center gap-1.5 border-white/20 text-zinc-300 pl-2 pr-1.5 py-1">
-                      Under {(maxPrice / 100000).toFixed(1)} Lacs
-                      <button onClick={() => setMaxPrice(20000000)} className="hover:text-white"><X className="w-3.5 h-3.5" /></button>
+                  {maxPrice < MAX_PRICE && (
+                    <Badge variant="outline" className="flex items-center gap-1.5 border-gray-200 text-gray-700 pl-2 pr-1.5 py-1 bg-gray-50">
+                      Under {(maxPrice / 100000).toFixed(0)} Lacs
+                      <button onClick={() => setMaxPrice(MAX_PRICE)} className="hover:text-red-500"><X className="w-3.5 h-3.5" /></button>
                     </Badge>
                   )}
                   {selectedYear && (
-                    <Badge variant="outline" className="flex items-center gap-1.5 border-white/20 text-zinc-300 pl-2 pr-1.5 py-1">
+                    <Badge variant="outline" className="flex items-center gap-1.5 border-gray-200 text-gray-700 pl-2 pr-1.5 py-1 bg-gray-50">
                       Year: {selectedYear}
-                      <button onClick={() => setSelectedYear(null)} className="hover:text-white"><X className="w-3.5 h-3.5" /></button>
+                      <button onClick={() => setSelectedYear(null)} className="hover:text-red-500"><X className="w-3.5 h-3.5" /></button>
                     </Badge>
                   )}
-                  {selectedFuel.map(f => (
-                    <Badge key={f} variant="outline" className="flex items-center gap-1.5 border-white/20 text-zinc-300 pl-2 pr-1.5 py-1">
+                  {selectedFuel.map((f) => (
+                    <Badge key={f} variant="outline" className="flex items-center gap-1.5 border-gray-200 text-gray-700 pl-2 pr-1.5 py-1 bg-gray-50">
                       Fuel: {f}
-                      <button onClick={() => handleRemoveFuel(f)} className="hover:text-white"><X className="w-3.5 h-3.5" /></button>
+                      <button onClick={() => setSelectedFuel(selectedFuel.filter((x) => x !== f))} className="hover:text-red-500"><X className="w-3.5 h-3.5" /></button>
                     </Badge>
                   ))}
-                  <button 
-                    onClick={handleResetFilters}
-                    className="text-xs font-semibold text-neon-red hover:underline ml-auto"
-                  >
+                  <button onClick={handleResetFilters} className="text-xs font-semibold text-[#0055FE] hover:underline ml-auto">
                     Clear All
                   </button>
                 </div>
               )}
 
               {/* Top Bar */}
-              <div className="flex flex-col sm:flex-row justify-between items-center mb-6 bg-white/5 p-4 rounded-xl border border-white/5">
-                <span className="text-zinc-300 text-sm font-medium mb-4 sm:mb-0">
-                  {sortedCars.length} {sortedCars.length === 1 ? "Car" : "Cars"} Found
+              <div className="flex flex-col sm:flex-row justify-between items-center mb-6 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                <span className="text-gray-900 text-sm font-medium mb-4 sm:mb-0 flex items-center gap-2">
+                  {isLoadingState
+                    ? <><Loader2 className="w-4 h-4 animate-spin text-[#0055FE]" /> Loading...</>
+                    : <>{total} {total === 1 ? 'Car' : 'Cars'} Found</>
+                  }
                 </span>
                 <div className="flex items-center gap-3 w-full sm:w-auto">
-                  <span className="text-xs text-zinc-500 shrink-0">Sort By:</span>
-                  <select 
+                  <span className="text-xs text-gray-500 shrink-0">Sort By:</span>
+                  <select
                     value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="flex-1 sm:w-48 px-4 py-2 bg-[#09090b] border border-white/10 rounded-lg text-sm text-zinc-300 focus:outline-none focus:ring-1 focus:ring-neon-red appearance-none cursor-pointer"
+                    onChange={(e) => setSortBy(e.target.value as FetchCarsFilters['sortBy'])}
+                    className="flex-1 sm:w-48 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#0055FE] focus:border-[#0055FE] appearance-none cursor-pointer"
                   >
                     <option value="newest">Newest First</option>
                     <option value="price-asc">Price: Low to High</option>
@@ -428,58 +520,70 @@ function BuyCarContent() {
               </div>
 
               {/* Car Grid */}
-              {sortedCars.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6 animate-in fade-in duration-300">
-                  {displayedCars.map((car) => (
+              {isLoadingState ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
+                    <SkeletonCard key={i} />
+                  ))}
+                </div>
+              ) : cars.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 animate-in fade-in duration-300">
+                  {cars.map((car) => (
                     <CarCard key={car.id} car={car} />
                   ))}
                 </div>
               ) : (
-                /* Empty state */
-                <div className="flex flex-col items-center justify-center py-20 text-center bg-white/5 rounded-3xl border border-white/5">
-                  <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4 border border-white/10 text-zinc-400">
+                <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-xl border border-gray-200 shadow-sm">
+                  <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4 border border-gray-200 text-gray-400">
                     <Car className="w-8 h-8" />
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2">No Cars Found</h3>
-                  <p className="text-zinc-400 text-sm max-w-sm mb-6">
-                    We couldn&apos;t find any vehicles matching your filter criteria. Try relaxing your filters.
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">No Cars Found</h3>
+                  <p className="text-gray-500 text-sm max-w-sm mb-6">
+                    We couldn&apos;t find any vehicles matching your filter criteria. Try relaxing your filters or check back later.
                   </p>
-                  <Button onClick={handleResetFilters} className="bg-neon-red hover:bg-red-600 text-white font-bold px-6">
+                  <Button
+                    onClick={handleResetFilters}
+                    className="bg-[#0055FE] hover:bg-blue-700 text-white font-bold px-6"
+                  >
                     Clear All Filters
                   </Button>
                 </div>
               )}
 
               {/* Pagination */}
-              {totalPages > 1 && (
+              {totalPages > 1 && !isLoadingState && (
                 <div className="flex justify-center items-center gap-2 mt-12">
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
-                    className="border-white/10 text-zinc-400 hover:text-white bg-white/5"
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="border-gray-200 text-gray-500 hover:text-gray-900 bg-white"
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </Button>
-                  {Array.from({ length: totalPages }).map((_, idx) => {
+                  {Array.from({ length: Math.min(totalPages, 7) }).map((_, idx) => {
                     const page = idx + 1;
                     return (
-                      <Button 
-                        key={page} 
-                        variant={page === currentPage ? "default" : "outline"} 
-                        className={`w-10 h-10 ${page === currentPage ? 'bg-neon-red text-white hover:bg-red-600 border-none' : 'border-white/10 text-zinc-400 hover:text-white bg-white/5'}`}
+                      <Button
+                        key={page}
+                        variant={page === currentPage ? 'default' : 'outline'}
+                        className={`w-10 h-10 ${
+                          page === currentPage
+                            ? 'bg-[#0055FE] text-white hover:bg-blue-700 border-none'
+                            : 'border-gray-200 text-gray-600 hover:text-gray-900 bg-white hover:bg-gray-50'
+                        }`}
                         onClick={() => setCurrentPage(page)}
                       >
                         {page}
                       </Button>
                     );
                   })}
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
-                    className="border-white/10 text-zinc-400 hover:text-white bg-white/5"
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="border-gray-200 text-gray-500 hover:text-gray-900 bg-white"
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                     disabled={currentPage === totalPages}
                   >
                     <ChevronRight className="w-4 h-4" />
@@ -498,7 +602,13 @@ function BuyCarContent() {
 
 export default function BuyCarPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#09090b] flex items-center justify-center text-white">Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-[#0055FE]" />
+        </div>
+      }
+    >
       <BuyCarContent />
     </Suspense>
   );

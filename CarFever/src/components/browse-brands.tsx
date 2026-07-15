@@ -23,16 +23,16 @@ export function BrowseByBrand() {
         {/* Section Header */}
         <div className="text-center mb-14">
           <div className="flex items-center justify-center gap-2 mb-3">
-            <div className="w-8 h-[2px] bg-electric-blue rounded-full" />
-            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-electric-blue">
+            <div className="w-8 h-[2px] bg-[#0055FE] rounded-full" />
+            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#0055FE]">
               Browse
             </span>
-            <div className="w-8 h-[2px] bg-electric-blue rounded-full" />
+            <div className="w-8 h-[2px] bg-[#0055FE] rounded-full" />
           </div>
-          <h2 className="text-3xl sm:text-4xl font-bold text-white">
-            Shop By <span className="text-electric-blue">Brand</span>
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">
+            Shop By <span className="text-[#0055FE]">Brand</span>
           </h2>
-          <p className="text-zinc-400 mt-2 max-w-md mx-auto">
+          <p className="text-gray-600 mt-2 max-w-md mx-auto">
             Explore vehicles from the world&apos;s most trusted automotive manufacturers.
           </p>
         </div>
@@ -43,23 +43,23 @@ export function BrowseByBrand() {
             <Link
               key={brand.name}
               href={`/buy-car?brand=${brand.name.toLowerCase()}`}
-              className="group relative flex flex-col items-center gap-3 p-6 rounded-2xl bg-card border border-white/[0.06] hover:border-electric-blue/30 transition-all duration-500 hover:shadow-lg hover:shadow-electric-blue/5"
+              className="group relative flex flex-col items-center gap-3 p-6 rounded-2xl bg-white border border-gray-200 hover:border-[#0055FE]/30 transition-all duration-500 hover:shadow-lg hover:shadow-blue-500/5"
             >
               {/* Logo emoji placeholder */}
               <div className="text-4xl mb-1 transition-transform duration-500 group-hover:scale-110">
                 {brand.logo}
               </div>
 
-              <span className="text-sm font-semibold text-white group-hover:text-electric-blue transition-colors duration-300">
+              <span className="text-sm font-semibold text-gray-900 group-hover:text-[#0055FE] transition-colors duration-300">
                 {brand.name}
               </span>
-              <span className="text-xs text-zinc-500">
+              <span className="text-xs text-gray-500">
                 {brand.count} listings
               </span>
 
               {/* Hover arrow */}
               <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <ChevronRight className="w-4 h-4 text-electric-blue" />
+                <ChevronRight className="w-4 h-4 text-[#0055FE]" />
               </div>
             </Link>
           ))}

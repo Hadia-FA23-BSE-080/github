@@ -12,11 +12,12 @@ import {
   Settings,
   LogOut,
   Bell,
-  Search,
+  FileText,
+  BarChart3,
+  Search as SearchIcon,
   ChevronDown,
-  Menu,
+  X,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 interface MenuItem {
   label: string;
@@ -25,32 +26,33 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
-  { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-  { label: "Manage Cars", href: "/admin/cars", icon: Car },
-  { label: "Users", href: "/admin/users", icon: Users },
-  { label: "Inspections", href: "/admin/inspections", icon: ShieldCheck },
-  { label: "Inquiries", href: "/admin/inquiries", icon: MessageSquare },
-  { label: "Settings", href: "/admin/settings", icon: Settings },
+  { label: "Dashboard",         href: "/admin/dashboard",    icon: LayoutDashboard },
+  { label: "Manage Cars",       href: "/admin/cars",         icon: Car },
+  { label: "Manage Blogs",      href: "/admin/blogs",        icon: FileText },
+  { label: "Inspections",       href: "/admin/inspections",  icon: ShieldCheck },
+  { label: "Inquiries",         href: "/admin/inquiries",    icon: MessageSquare },
+  { label: "Manage Users",      href: "/admin/users",        icon: Users },
+  { label: "SEO Settings",      href: "/admin/seo",          icon: SearchIcon },
+  { label: "Site Settings",     href: "/admin/settings",     icon: Settings },
+  { label: "Analytics",         href: "/admin/analytics",    icon: BarChart3 },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
+  const router   = useRouter();
   const pathname = usePathname();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [adminUser, setAdminUser] = useState<any>(null);
-  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [isAuthenticated,    setIsAuthenticated]    = useState(false);
+  const [adminUser,          setAdminUser]          = useState<any>(null);
+  const [profileOpen,        setProfileOpen]        = useState(false);
+  const [sidebarOpen,        setSidebarOpen]        = useState(false);
 
   useEffect(() => {
     if (pathname === "/admin/login") return;
-    
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("cf_admin_user");
-      if (!stored) {
-        router.push("/admin/login");
-      } else {
-        setAdminUser(JSON.parse(stored));
-        setIsAuthenticated(true);
-      }
+    const stored = localStorage.getItem("cf_admin_user");
+    if (!stored) {
+      router.push("/admin/login");
+    } else {
+      setAdminUser(JSON.parse(stored));
+      setIsAuthenticated(true);
     }
   }, [router, pathname]);
 
@@ -59,165 +61,212 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     router.push("/admin/login");
   };
 
-  // If on login page, render children directly without dashboard shell or authentication checks
-  // This must be placed after all hooks have been declared to prevent Hook Mismatch error in React
-  if (pathname === "/admin/login") {
-    return <>{children}</>;
-  }
+  if (pathname === "/admin/login") return <>{children}</>;
 
-  // If not authenticated yet, render a dark loading page to prevent content flash
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center">
-        <div className="w-8 h-8 rounded-full border-2 border-neon-red border-t-transparent animate-spin" />
-        <span className="text-zinc-500 text-xs mt-3 uppercase tracking-widest">Verifying Admin Session...</span>
+      <div style={{ minHeight: "100vh", background: "#0f0f0f", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ width: 32, height: 32, borderRadius: "50%", border: "2px solid #0055FE", borderTopColor: "transparent", animation: "spin 0.8s linear infinite" }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        <span style={{ color: "#666", fontSize: 11, marginTop: 12, letterSpacing: "0.2em", textTransform: "uppercase" }}>Verifying Session…</span>
       </div>
     );
   }
 
-  // Get current breadcrumb
-  const currentTab = pathname.split("/").pop() || "Admin";
-  const formattedBreadcrumb = currentTab.charAt(0).toUpperCase() + currentTab.slice(1);
+  const breadcrumb = pathname.split("/").filter(Boolean).slice(1).map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(" / ") || "Admin";
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex text-zinc-300">
-      
-      {/* ─── SIDEBAR ─── */}
-      <aside className="fixed inset-y-0 left-0 w-64 bg-zinc-950 border-r border-white/10 flex flex-col justify-between z-30">
-        <div>
-          {/* Logo Area */}
-          <div className="h-18 flex items-center gap-3 px-6 border-b border-white/10">
-            <div className="w-8 h-8 rounded-lg bg-neon-red flex items-center justify-center shrink-0">
-              <Car className="w-4.5 h-4.5 text-white" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-bold tracking-tight text-white leading-none">
-                Car<span className="text-neon-red">Fever</span>
-              </span>
-              <span className="text-[9px] text-zinc-500 font-semibold tracking-wider uppercase leading-none mt-1">
-                Admin Console
-              </span>
-            </div>
-            <span className="ml-auto text-[9px] font-bold bg-neon-red/10 text-neon-red px-1.5 py-0.5 rounded border border-neon-red/20 uppercase tracking-widest">
-              Live
-            </span>
-          </div>
+    <div style={{ minHeight: "100vh", background: "#0f0f0f", display: "flex", color: "#d1d5db" }}>
 
-          {/* Navigation Links */}
-          <nav className="p-4 space-y-1.5">
-            {menuItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = pathname === item.href;
-              
-              return (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all group ${
-                    isActive
-                      ? "text-white bg-white/5 border-l-2 border-neon-red"
-                      : "text-zinc-400 hover:text-white hover:bg-white/5"
-                  }`}
-                >
-                  <Icon className={`w-4.5 h-4.5 transition-colors ${isActive ? "text-neon-red" : "text-zinc-400 group-hover:text-white"}`} />
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
+      {/* ── MOBILE OVERLAY ── */}
+      {sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 40 }}
+        />
+      )}
+
+      {/* ── SIDEBAR ── */}
+      <aside style={{
+        position: "fixed", top: 0, left: 0, bottom: 0, width: 240,
+        background: "#141414", borderRight: "1px solid #222",
+        display: "flex", flexDirection: "column", zIndex: 50,
+        transform: sidebarOpen ? "translateX(0)" : undefined,
+      }}
+        className="hidden lg:flex"
+      >
+        {/* Logo */}
+        <div style={{ padding: "20px 24px", borderBottom: "1px solid #222", display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ width: 34, height: 34, borderRadius: 8, background: "#0055FE", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <Car style={{ width: 18, height: 18, color: "#fff" }} />
+          </div>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", lineHeight: 1 }}>
+              Car<span style={{ color: "#0055FE" }}>Fever</span>
+            </div>
+            <div style={{ fontSize: 9, color: "#555", letterSpacing: "0.15em", textTransform: "uppercase", marginTop: 3 }}>Admin Console</div>
+          </div>
+          <span style={{ marginLeft: "auto", fontSize: 9, fontWeight: 700, background: "rgba(0,85,254,0.15)", color: "#0055FE", padding: "2px 6px", borderRadius: 4, border: "1px solid rgba(0,85,254,0.3)", letterSpacing: "0.1em" }}>LIVE</span>
         </div>
 
-        {/* Logout at bottom */}
-        <div className="p-4 border-t border-white/10">
+        {/* Nav */}
+        <nav style={{ flex: 1, padding: "12px 12px", overflowY: "auto" }}>
+          {menuItems.map((item) => {
+            const Icon = item.icon;
+            const active = pathname === item.href || pathname.startsWith(item.href + "/");
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                style={{
+                  display: "flex", alignItems: "center", gap: 10,
+                  padding: "10px 14px", borderRadius: 10, marginBottom: 2,
+                  fontSize: 13, fontWeight: 500, textDecoration: "none",
+                  transition: "all 0.15s",
+                  background: active ? "rgba(0,85,254,0.12)" : "transparent",
+                  color: active ? "#fff" : "#888",
+                  borderLeft: active ? "3px solid #0055FE" : "3px solid transparent",
+                }}
+              >
+                <Icon style={{ width: 16, height: 16, color: active ? "#0055FE" : "#555", flexShrink: 0 }} />
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Logout */}
+        <div style={{ padding: "12px", borderTop: "1px solid #222" }}>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-zinc-400 hover:text-neon-red hover:bg-red-500/5 transition-all"
+            style={{
+              width: "100%", display: "flex", alignItems: "center", gap: 10,
+              padding: "10px 14px", borderRadius: 10, background: "transparent",
+              border: "none", cursor: "pointer", color: "#666", fontSize: 13, fontWeight: 500,
+              transition: "all 0.15s",
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = "#ef4444"; (e.currentTarget as HTMLButtonElement).style.background = "rgba(239,68,68,0.05)"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = "#666"; (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
           >
-            <LogOut className="w-4.5 h-4.5 text-zinc-400 group-hover:text-neon-red" />
+            <LogOut style={{ width: 16, height: 16 }} />
             Sign Out
           </button>
         </div>
       </aside>
 
-      {/* ─── MAIN CONTENT WRAPPER ─── */}
-      <div className="flex-1 pl-64 flex flex-col">
-        
-        {/* Top Navbar */}
-        <header className="h-18 border-b border-white/10 px-8 flex items-center justify-between bg-zinc-950/80 backdrop-blur-md sticky top-0 z-20">
+      {/* Mobile sidebar */}
+      {sidebarOpen && (
+        <aside style={{
+          position: "fixed", top: 0, left: 0, bottom: 0, width: 240,
+          background: "#141414", borderRight: "1px solid #222",
+          display: "flex", flexDirection: "column", zIndex: 50,
+        }}>
+          <div style={{ padding: "20px 24px", borderBottom: "1px solid #222", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>Car<span style={{ color: "#0055FE" }}>Fever</span> Admin</div>
+            <button onClick={() => setSidebarOpen(false)} style={{ background: "none", border: "none", color: "#666", cursor: "pointer" }}>
+              <X style={{ width: 18, height: 18 }} />
+            </button>
+          </div>
+          <nav style={{ flex: 1, padding: "12px", overflowY: "auto" }}>
+            {menuItems.map((item) => {
+              const Icon = item.icon;
+              const active = pathname === item.href;
+              return (
+                <Link key={item.href} href={item.href} onClick={() => setSidebarOpen(false)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 10,
+                    padding: "10px 14px", borderRadius: 10, marginBottom: 2,
+                    fontSize: 13, fontWeight: 500, textDecoration: "none",
+                    background: active ? "rgba(0,85,254,0.12)" : "transparent",
+                    color: active ? "#fff" : "#888",
+                    borderLeft: active ? "3px solid #0055FE" : "3px solid transparent",
+                  }}>
+                  <Icon style={{ width: 16, height: 16, color: active ? "#0055FE" : "#555" }} />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+          <div style={{ padding: "12px", borderTop: "1px solid #222" }}>
+            <button onClick={handleLogout} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderRadius: 10, background: "transparent", border: "none", cursor: "pointer", color: "#666", fontSize: 13 }}>
+              <LogOut style={{ width: 16, height: 16 }} /> Sign Out
+            </button>
+          </div>
+        </aside>
+      )}
+
+      {/* ── MAIN ── */}
+      <div style={{ flex: 1, paddingLeft: 240, display: "flex", flexDirection: "column" }} className="lg:pl-[240px] pl-0">
+
+        {/* Top bar */}
+        <header style={{ height: 64, borderBottom: "1px solid #222", padding: "0 32px", display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(20,20,20,0.95)", backdropFilter: "blur(8px)", position: "sticky", top: 0, zIndex: 20 }}>
           
-          {/* Breadcrumbs */}
-          <div className="flex items-center gap-2 text-xs font-semibold text-zinc-400 uppercase tracking-widest">
-            <span>Admin</span>
-            <span className="text-zinc-600">/</span>
-            <span className="text-white font-bold">{formattedBreadcrumb}</span>
+          {/* Mobile menu + breadcrumb */}
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="lg:hidden"
+              style={{ background: "none", border: "none", color: "#888", cursor: "pointer", padding: 4 }}
+            >
+              <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+            </button>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "#555", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+              Admin / <span style={{ color: "#fff" }}>{breadcrumb}</span>
+            </div>
           </div>
 
-          {/* Right Header Actions */}
-          <div className="flex items-center gap-4">
-            
-            {/* Search Placeholder */}
-            <div className="relative w-64 hidden sm:block">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-              <input
-                type="text"
-                placeholder="Search database..."
-                disabled
-                className="w-full pl-9 pr-4 py-2 bg-white/5 border border-white/10 rounded-xl text-xs text-zinc-400 placeholder-zinc-500 focus:outline-none cursor-not-allowed"
-              />
-            </div>
+          {/* Right actions */}
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
 
-            {/* Notification Bell */}
-            <button className="p-2 text-zinc-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors relative">
-              <Bell className="w-4.5 h-4.5" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-neon-red rounded-full animate-pulse" />
+            {/* Bell */}
+            <button style={{ position: "relative", background: "none", border: "none", padding: 8, borderRadius: 8, color: "#666", cursor: "pointer" }}>
+              <Bell style={{ width: 17, height: 17 }} />
+              <span style={{ position: "absolute", top: 6, right: 6, width: 7, height: 7, background: "#ef4444", borderRadius: "50%" }} />
             </button>
 
-            <div className="w-px h-6 bg-white/10" />
+            <div style={{ width: 1, height: 24, background: "#222" }} />
 
-            {/* Admin Profile Dropdown */}
-            <div className="relative">
+            {/* Profile */}
+            <div style={{ position: "relative" }}>
               <button
-                onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-                className="flex items-center gap-2.5 p-1.5 rounded-xl hover:bg-white/5 transition-all text-left"
+                onClick={() => setProfileOpen(o => !o)}
+                style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", borderRadius: 10, background: "transparent", border: "none", cursor: "pointer" }}
               >
-                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-neon-red to-electric-blue flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-lg">
-                  A
+                <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg, #0055FE, #00B67A)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 12, fontWeight: 700, flexShrink: 0 }}>
+                  {adminUser?.name?.[0]?.toUpperCase() || "A"}
                 </div>
-                <div className="hidden md:block">
-                  <p className="text-xs font-bold text-white leading-none">Admin User</p>
-                  <p className="text-[10px] text-zinc-500 mt-1 leading-none">Super Administrator</p>
+                <div className="hidden md:block" style={{ textAlign: "left" }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "#fff", lineHeight: 1 }}>{adminUser?.name || "Admin"}</div>
+                  <div style={{ fontSize: 10, color: "#555", marginTop: 2 }}>Super Administrator</div>
                 </div>
-                <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
+                <ChevronDown style={{ width: 14, height: 14, color: "#555" }} />
               </button>
 
-              {profileDropdownOpen && (
+              {profileOpen && (
                 <>
-                  <div className="fixed inset-0 z-30" onClick={() => setProfileDropdownOpen(false)} />
-                  <div className="absolute right-0 top-full mt-2 w-48 bg-zinc-900 border border-white/10 rounded-xl shadow-2xl py-1.5 z-40 animate-in slide-in-from-top-2 fade-in duration-150">
-                    <div className="px-4 py-2 border-b border-white/5">
-                      <p className="text-xs font-bold text-white truncate">admin@carfever.com</p>
-                      <p className="text-[10px] text-zinc-500 mt-0.5 truncate">Role: Super Admin</p>
+                  <div onClick={() => setProfileOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 30 }} />
+                  <div style={{ position: "absolute", right: 0, top: "calc(100% + 8px)", width: 200, background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 12, boxShadow: "0 20px 40px rgba(0,0,0,0.5)", zIndex: 40, overflow: "hidden" }}>
+                    <div style={{ padding: "12px 16px", borderBottom: "1px solid #222" }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: "#fff" }}>{adminUser?.email || "admin@carfever.pk"}</div>
+                      <div style={{ fontSize: 10, color: "#555", marginTop: 2 }}>Super Admin</div>
                     </div>
                     <button
                       onClick={handleLogout}
-                      className="w-full flex items-center gap-2 px-4 py-2.5 text-xs text-zinc-300 hover:text-neon-red hover:bg-white/5 transition-colors text-left"
+                      style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "10px 16px", background: "transparent", border: "none", cursor: "pointer", color: "#888", fontSize: 12 }}
                     >
-                      <LogOut className="w-3.5 h-3.5" />
-                      Sign Out
+                      <LogOut style={{ width: 14, height: 14 }} /> Sign Out
                     </button>
                   </div>
                 </>
               )}
             </div>
-
           </div>
         </header>
 
-        {/* Main Content Viewport */}
-        <main className="flex-1 p-8">
+        {/* Page content */}
+        <main style={{ flex: 1, padding: "32px" }}>
           {children}
         </main>
-
       </div>
     </div>
   );

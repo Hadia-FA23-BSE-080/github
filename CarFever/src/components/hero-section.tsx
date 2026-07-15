@@ -31,32 +31,20 @@ export function HeroSection() {
   const [showCities, setShowCities] = useState(false);
 
   return (
-    <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
+    <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden pt-32 lg:pt-0 bg-[#F8F9FA]">
       {/* Background Layers */}
       <div className="absolute inset-0">
-        {/* Gradient mesh background */}
-        <div className="absolute inset-0 bg-[#09090b]/80 z-0" />
-        
         {/* Sports Car Background (Subtle) */}
         <div 
-          className="absolute inset-0 opacity-20 mix-blend-luminosity bg-cover bg-center bg-no-repeat"
+          className="absolute inset-0 opacity-[0.05] bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url('https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?auto=format&fit=crop&w=1920&q=80')" }}
         />
-        
-        {/* Red glow - top right */}
-        <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-neon-red/8 blur-[150px]" />
-        
-        {/* Blue glow - bottom left */}
-        <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] rounded-full bg-electric-blue/8 blur-[150px]" />
-        
-        {/* Center subtle glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] rounded-full bg-white/[0.02] blur-[100px]" />
 
         {/* Grid pattern */}
         <div
-          className="absolute inset-0 opacity-[0.03]"
+          className="absolute inset-0 opacity-[0.05]"
           style={{
-            backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+            backgroundImage: `linear-gradient(rgba(0,0,0,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.1) 1px, transparent 1px)`,
             backgroundSize: "60px 60px",
           }}
         />
@@ -65,25 +53,25 @@ export function HeroSection() {
       {/* Content */}
       <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         {/* Badge */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass mb-8 animate-fade-in">
-          <Sparkles className="w-3.5 h-3.5 text-neon-red" />
-          <span className="text-xs font-medium text-zinc-300 tracking-wide">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#0055FE]/10 mb-8 animate-fade-in border border-[#0055FE]/20">
+          <Sparkles className="w-3.5 h-3.5 text-[#0055FE]" />
+          <span className="text-xs font-semibold text-[#0055FE] tracking-wide">
             Pakistan&apos;s #1 Premium Car Marketplace
           </span>
         </div>
 
         {/* Heading */}
-        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6 animate-slide-up">
-          <span className="text-white">Find Your</span>
+        <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6 animate-slide-up text-gray-900">
+          Find Your
           <br />
-          <span className="bg-gradient-to-r from-neon-red via-red-400 to-electric-blue bg-clip-text text-transparent">
+          <span className="text-[#0055FE]">
             Dream Car
           </span>
         </h1>
 
         {/* Subtitle */}
         <p
-          className="text-lg sm:text-xl text-zinc-400 max-w-2xl mx-auto mb-10 animate-slide-up"
+          className="text-sm sm:text-base md:text-lg text-gray-600 max-w-2xl mx-auto mb-8 sm:mb-10 px-2 sm:px-0 animate-slide-up"
           style={{ animationDelay: "0.1s" }}
         >
           Browse through thousands of verified listings. Buy, sell, or exchange
@@ -92,33 +80,33 @@ export function HeroSection() {
 
         {/* Search Bar */}
         <div
-          className="max-w-3xl mx-auto animate-slide-up"
+          className="max-w-3xl mx-auto px-1 sm:px-0 animate-slide-up"
           style={{ animationDelay: "0.2s" }}
         >
-          <div className="glass-heavy rounded-2xl p-2 shadow-2xl shadow-black/40">
+          <div className="bg-white rounded-2xl p-2.5 sm:p-2 shadow-lg border border-gray-200">
             <div className="flex flex-col sm:flex-row gap-2">
-              <select className="px-4 py-3 sm:py-3.5 bg-white/5 rounded-xl text-sm text-zinc-300 hover:bg-white/8 transition-colors border-none focus:ring-0 focus:outline-none w-full sm:w-auto min-w-[140px] appearance-none cursor-pointer">
+              <select className="h-11 sm:h-12 px-4 bg-gray-50 rounded-xl text-base sm:text-sm text-gray-900 hover:bg-gray-100 transition-colors border border-transparent focus:border-[#0055FE] focus:ring-1 focus:ring-[#0055FE] focus:outline-none w-full sm:w-auto min-w-[140px] appearance-none cursor-pointer">
                 <option value="">Select Make</option>
                 <option value="toyota">Toyota</option>
                 <option value="honda">Honda</option>
                 <option value="suzuki">Suzuki</option>
               </select>
 
-              <select className="px-4 py-3 sm:py-3.5 bg-white/5 rounded-xl text-sm text-zinc-300 hover:bg-white/8 transition-colors border-none focus:ring-0 focus:outline-none w-full sm:w-auto min-w-[140px] appearance-none cursor-pointer">
+              <select className="h-11 sm:h-12 px-4 bg-gray-50 rounded-xl text-base sm:text-sm text-gray-900 hover:bg-gray-100 transition-colors border border-transparent focus:border-[#0055FE] focus:ring-1 focus:ring-[#0055FE] focus:outline-none w-full sm:w-auto min-w-[140px] appearance-none cursor-pointer">
                 <option value="">Select Model</option>
                 <option value="corolla">Corolla</option>
                 <option value="civic">Civic</option>
                 <option value="alto">Alto</option>
               </select>
               
-              <select className="px-4 py-3 sm:py-3.5 bg-white/5 rounded-xl text-sm text-zinc-300 hover:bg-white/8 transition-colors border-none focus:ring-0 focus:outline-none w-full sm:w-auto min-w-[140px] appearance-none cursor-pointer">
+              <select className="h-11 sm:h-12 px-4 bg-gray-50 rounded-xl text-base sm:text-sm text-gray-900 hover:bg-gray-100 transition-colors border border-transparent focus:border-[#0055FE] focus:ring-1 focus:ring-[#0055FE] focus:outline-none w-full sm:w-auto min-w-[140px] appearance-none cursor-pointer">
                 <option value="">Select City</option>
                 <option value="lahore">Lahore</option>
                 <option value="karachi">Karachi</option>
                 <option value="islamabad">Islamabad</option>
               </select>
 
-              <select className="px-4 py-3 sm:py-3.5 bg-white/5 rounded-xl text-sm text-zinc-300 hover:bg-white/8 transition-colors border-none focus:ring-0 focus:outline-none w-full sm:w-auto min-w-[140px] appearance-none cursor-pointer">
+              <select className="h-11 sm:h-12 px-4 bg-gray-50 rounded-xl text-base sm:text-sm text-gray-900 hover:bg-gray-100 transition-colors border border-transparent focus:border-[#0055FE] focus:ring-1 focus:ring-[#0055FE] focus:outline-none w-full sm:w-auto min-w-[140px] appearance-none cursor-pointer">
                 <option value="">Budget Range</option>
                 <option value="under-1m">Under 1 Million</option>
                 <option value="1m-3m">1M - 3M</option>
@@ -127,11 +115,10 @@ export function HeroSection() {
 
               {/* Search Button */}
               <Button
-                size="lg"
                 onClick={() => router.push('/buy-car')}
-                className="bg-neon-red hover:bg-red-600 text-white font-semibold px-8 rounded-xl glow-red-subtle hover:glow-red transition-all duration-300 h-auto py-3 sm:py-3.5 flex-1"
+                className="h-11 sm:h-12 bg-[#0055FE] hover:bg-blue-700 active:scale-95 text-white font-bold px-8 rounded-xl transition-all duration-200 w-full sm:w-auto sm:flex-1 shadow-sm hover:shadow-md"
               >
-                <Search className="w-4.5 h-4.5 mr-2" />
+                <Search className="w-4 h-4 mr-2" />
                 Search
               </Button>
             </div>
@@ -139,12 +126,12 @@ export function HeroSection() {
 
           {/* Popular Searches */}
           <div className="flex items-center gap-2 mt-5 flex-wrap justify-center">
-            <span className="text-xs text-zinc-500 font-medium">Popular:</span>
+            <span className="text-xs text-gray-500 font-medium">Popular:</span>
             {popularSearches.map((term) => (
               <button
                 key={term}
                 onClick={() => setSearchQuery(term)}
-                className="px-3 py-1 text-xs text-zinc-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-all duration-200"
+                className="px-3 py-1 text-xs text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-full transition-all duration-200"
               >
                 {term}
               </button>
@@ -164,10 +151,10 @@ export function HeroSection() {
             { value: "4.9★", label: "User Rating" },
           ].map((stat) => (
             <div key={stat.label} className="text-center">
-              <div className="text-2xl sm:text-3xl font-bold text-white mb-1">
+              <div className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">
                 {stat.value}
               </div>
-              <div className="text-xs sm:text-sm text-zinc-500">
+              <div className="text-xs sm:text-sm text-gray-500">
                 {stat.label}
               </div>
             </div>
@@ -176,7 +163,7 @@ export function HeroSection() {
       </div>
 
       {/* Bottom fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#09090b] to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#F8F9FA] to-transparent" />
     </section>
   );
 }
