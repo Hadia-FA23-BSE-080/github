@@ -1,326 +1,339 @@
 "use client";
 
-import { useState } from "react";
-import { 
-  BarChart3, 
-  TrendingUp, 
-  Users, 
-  Eye, 
-  Calendar, 
+import { useState, useEffect } from "react";
+import {
+  BarChart3,
+  TrendingUp,
+  Users,
+  Eye,
+  Car,
+  MessageSquare,
+  ShieldCheck,
+  FileText,
+  ExternalLink,
+  Settings,
+  CheckCircle2,
+  AlertCircle,
   Download,
-  Filter
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { fetchAllUsers } from "@/lib/admin-actions";
+import { createClient } from "@/lib/supabase/client";
+import Link from "next/link";
+
+interface RealStats {
+  totalUsers: number;
+  totalCars: number;
+  approvedCars: number;
+  pendingCars: number;
+  totalInquiries: number;
+  totalInspections: number;
+  totalBlogs: number;
+  publishedBlogs: number;
+}
 
 export default function AnalyticsPage() {
-  const [timeRange, setTimeRange] = useState("30days");
+  const [stats, setStats] = useState<RealStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [gaId, setGaId] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const supabase = createClient();
+
+        // Fetch all counts in parallel
+        const [users, allCars, approvedCars, pendingCars, inquiries, inspections, allBlogs, publishedBlogs] =
+          await Promise.all([
+            fetchAllUsers(),
+            supabase.from("cars").select("id", { count: "exact", head: true }),
+            supabase.from("cars").select("id", { count: "exact", head: true }).eq("status", "approved"),
+            supabase.from("cars").select("id", { count: "exact", head: true }).eq("status", "pending"),
+            supabase.from("inquiries").select("id", { count: "exact", head: true }),
+            supabase.from("inspections").select("id", { count: "exact", head: true }),
+            supabase.from("blogs").select("id", { count: "exact", head: true }),
+            supabase.from("blogs").select("id", { count: "exact", head: true }).eq("status", "published"),
+          ]);
+
+        setStats({
+          totalUsers: users.length,
+          totalCars: allCars.count ?? 0,
+          approvedCars: approvedCars.count ?? 0,
+          pendingCars: pendingCars.count ?? 0,
+          totalInquiries: inquiries.count ?? 0,
+          totalInspections: inspections.count ?? 0,
+          totalBlogs: allBlogs.count ?? 0,
+          publishedBlogs: publishedBlogs.count ?? 0,
+        });
+
+        // Check if GA ID is in env
+        const ga = process.env.NEXT_PUBLIC_GA_ID;
+        setGaId(ga ?? null);
+      } catch (err) {
+        console.error("Analytics load error:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  const StatCard = ({
+    label,
+    value,
+    sub,
+    icon: Icon,
+    color,
+    bgColor,
+  }: {
+    label: string;
+    value: number | string;
+    sub?: string;
+    icon: React.ComponentType<any>;
+    color: string;
+    bgColor: string;
+  }) => (
+    <div className="bg-zinc-900 border border-white/10 rounded-2xl p-6 relative overflow-hidden">
+      <div className="flex justify-between items-start">
+        <div>
+          <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">{label}</p>
+          <h3 className="text-3xl font-bold text-white mt-2">
+            {loading ? (
+              <span className="inline-block w-12 h-8 bg-zinc-700 rounded animate-pulse" />
+            ) : (
+              value
+            )}
+          </h3>
+          {sub && !loading && (
+            <p className="text-xs text-zinc-500 mt-1">{sub}</p>
+          )}
+        </div>
+        <div className={`p-2.5 rounded-xl ${bgColor}`}>
+          <Icon className={`w-5 h-5 ${color}`} />
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold text-white">Analytics & Reports</h2>
-          <p className="text-sm text-zinc-400 mt-1">Detailed metrics, traffic, and performance analysis.</p>
+          <p className="text-sm text-zinc-400 mt-1">Real-time platform statistics from your database.</p>
         </div>
-        <div className="flex gap-3 items-center">
-          <div className="bg-white/5 border border-white/10 rounded-xl p-1 flex">
-            <button 
-              onClick={() => setTimeRange("7days")}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${timeRange === "7days" ? "bg-white/10 text-white" : "text-zinc-400 hover:text-white"}`}
+        <Button variant="outline" className="border-white/10 text-white hover:bg-white/5">
+          <Download className="w-4 h-4 mr-2" /> Export
+        </Button>
+      </div>
+
+      {/* Google Analytics Status Card */}
+      <div className={`border rounded-2xl p-5 flex items-start gap-4 ${
+        gaId
+          ? "bg-emerald-500/5 border-emerald-500/20"
+          : "bg-amber-500/5 border-amber-500/20"
+      }`}>
+        <div className={`p-2 rounded-xl shrink-0 ${gaId ? "bg-emerald-500/10" : "bg-amber-500/10"}`}>
+          {gaId
+            ? <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+            : <AlertCircle className="w-5 h-5 text-amber-400" />
+          }
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className={`text-sm font-bold ${gaId ? "text-emerald-400" : "text-amber-400"}`}>
+            {gaId ? `Google Analytics Connected: ${gaId}` : "Google Analytics Not Connected"}
+          </p>
+          <p className="text-xs text-zinc-500 mt-1">
+            {gaId
+              ? "Your website is tracking visitors. View detailed traffic reports in your Google Analytics dashboard."
+              : "To track real website traffic, add your GA4 Measurement ID (e.g. G-XXXXXXXXXX) to your .env.local file as NEXT_PUBLIC_GA_ID=G-XXXXXXXX, then restart the server."
+            }
+          </p>
+        </div>
+        <div className="flex gap-2 shrink-0">
+          {gaId ? (
+            <a
+              href={`https://analytics.google.com/`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold rounded-lg hover:bg-emerald-500/20 transition-colors"
             >
-              7 Days
-            </button>
-            <button 
-              onClick={() => setTimeRange("30days")}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${timeRange === "30days" ? "bg-white/10 text-white" : "text-zinc-400 hover:text-white"}`}
+              <ExternalLink className="w-3.5 h-3.5" />
+              Open GA Dashboard
+            </a>
+          ) : (
+            <Link
+              href="/admin/settings"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold rounded-lg hover:bg-amber-500/20 transition-colors"
             >
-              30 Days
-            </button>
-            <button 
-              onClick={() => setTimeRange("12months")}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${timeRange === "12months" ? "bg-white/10 text-white" : "text-zinc-400 hover:text-white"}`}
-            >
-              12 Months
-            </button>
-          </div>
-          <Button variant="outline" className="border-white/10 text-white hover:bg-white/5">
-            <Download className="w-4 h-4 mr-2" /> Export
-          </Button>
+              <Settings className="w-3.5 h-3.5" />
+              Setup
+            </Link>
+          )}
         </div>
       </div>
 
-      {/* Top Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-zinc-900 border border-white/10 rounded-2xl p-6 relative overflow-hidden group">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Total Page Views</p>
-              <h3 className="text-3xl font-bold text-white mt-2">142,504</h3>
-            </div>
-            <div className="p-2.5 rounded-xl bg-electric-blue/10 text-electric-blue">
-              <Eye className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5 mt-4 text-xs">
-            <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
-            <span className="text-emerald-500 font-bold">+24.5%</span>
-            <span className="text-zinc-600">vs previous period</span>
-          </div>
-        </div>
-
-        <div className="bg-zinc-900 border border-white/10 rounded-2xl p-6 relative overflow-hidden group">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Unique Visitors</p>
-              <h3 className="text-3xl font-bold text-white mt-2">84,120</h3>
-            </div>
-            <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-400">
-              <Users className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5 mt-4 text-xs">
-            <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
-            <span className="text-emerald-500 font-bold">+12.2%</span>
-            <span className="text-zinc-600">vs previous period</span>
-          </div>
-        </div>
-
-        <div className="bg-zinc-900 border border-white/10 rounded-2xl p-6 relative overflow-hidden group">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Conversion Rate</p>
-              <h3 className="text-3xl font-bold text-white mt-2">3.8%</h3>
-            </div>
-            <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400">
-              <BarChart3 className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5 mt-4 text-xs">
-            <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
-            <span className="text-emerald-500 font-bold">+1.2%</span>
-            <span className="text-zinc-600">vs previous period</span>
-          </div>
-        </div>
-
-        <div className="bg-zinc-900 border border-white/10 rounded-2xl p-6 relative overflow-hidden group">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Avg. Session Duration</p>
-              <h3 className="text-3xl font-bold text-white mt-2">4m 12s</h3>
-            </div>
-            <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-400">
-              <Calendar className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5 mt-4 text-xs text-red-400">
-            <span className="font-bold">-0.5%</span>
-            <span className="text-zinc-600">vs previous period</span>
-          </div>
+      {/* Real Stats Grid */}
+      <div>
+        <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-4">Platform Statistics — Live from Database</h3>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard
+            label="Registered Users"
+            value={stats?.totalUsers ?? 0}
+            icon={Users}
+            color="text-blue-400"
+            bgColor="bg-blue-500/10"
+          />
+          <StatCard
+            label="Total Listings"
+            value={stats?.totalCars ?? 0}
+            sub={`${stats?.approvedCars ?? 0} approved · ${stats?.pendingCars ?? 0} pending`}
+            icon={Car}
+            color="text-purple-400"
+            bgColor="bg-purple-500/10"
+          />
+          <StatCard
+            label="Inquiries"
+            value={stats?.totalInquiries ?? 0}
+            icon={MessageSquare}
+            color="text-orange-400"
+            bgColor="bg-orange-500/10"
+          />
+          <StatCard
+            label="Inspections"
+            value={stats?.totalInspections ?? 0}
+            icon={ShieldCheck}
+            color="text-emerald-400"
+            bgColor="bg-emerald-500/10"
+          />
         </div>
       </div>
 
-      {/* Main Charts Area */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        {/* Revenue Trend Area Chart */}
-        <div className="bg-zinc-900 border border-white/10 rounded-2xl p-6 flex flex-col">
-          <div className="flex items-center justify-between mb-6">
+      {/* Blog Stats */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="bg-zinc-900 border border-white/10 rounded-2xl p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 rounded-xl bg-teal-500/10">
+              <FileText className="w-5 h-5 text-teal-400" />
+            </div>
             <div>
-              <h3 className="text-lg font-bold text-white">Revenue Trend</h3>
-              <p className="text-xs text-zinc-500 mt-0.5">Last 6 Months (in Millions PKR)</p>
+              <h3 className="text-sm font-bold text-white">Blog Content</h3>
+              <p className="text-xs text-zinc-500">Published vs Draft</p>
             </div>
-            <Button variant="outline" size="sm" className="h-8 border-white/10 text-zinc-400 hover:text-white">
-              <Filter className="w-3.5 h-3.5 mr-2" /> Filter
-            </Button>
           </div>
-          
-          <div className="relative h-64 w-full bg-white/[0.02] rounded-xl border border-white/[0.05] p-4 flex flex-col justify-between mt-auto">
-            {/* Grid lines */}
-            <div className="absolute inset-0 flex flex-col justify-between p-4 pointer-events-none opacity-40">
-              <div className="border-b border-dashed border-white/10 w-full flex items-center justify-between"><span className="-translate-x-6 text-[10px] text-zinc-500">5M</span></div>
-              <div className="border-b border-dashed border-white/10 w-full flex items-center justify-between"><span className="-translate-x-6 text-[10px] text-zinc-500">4M</span></div>
-              <div className="border-b border-dashed border-white/10 w-full flex items-center justify-between"><span className="-translate-x-6 text-[10px] text-zinc-500">2M</span></div>
-              <div className="w-full flex items-center justify-between"><span className="-translate-x-6 text-[10px] text-zinc-500">0</span></div>
-            </div>
-
-            {/* SVG Area Chart */}
-            <div className="relative w-full h-44 mt-4 ml-2">
-              <svg viewBox="0 0 500 150" className="w-full h-full overflow-visible">
-                <path
-                  d="M0,120 Q50,90 100,100 T200,60 T300,80 T400,30 T500,20 L500,150 L0,150 Z"
-                  fill="url(#emeraldGlow)"
-                  opacity="0.2"
-                />
-                <path
-                  d="M0,120 Q50,90 100,100 T200,60 T300,80 T400,30 T500,20"
-                  fill="none"
-                  stroke="#10b981"
-                  strokeWidth="3"
-                  className="drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]"
-                />
-                {/* Data points */}
-                <circle cx="0" cy="120" r="4" fill="#10b981" />
-                <circle cx="100" cy="100" r="4" fill="#10b981" />
-                <circle cx="200" cy="60" r="4" fill="#10b981" />
-                <circle cx="300" cy="80" r="4" fill="#10b981" />
-                <circle cx="400" cy="30" r="4" fill="#10b981" />
-                <circle cx="500" cy="20" r="4" fill="#10b981" />
-                
-                <defs>
-                  <linearGradient id="emeraldGlow" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#10b981" />
-                    <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-              </svg>
-            </div>
-
-            <div className="flex justify-between text-[10px] text-zinc-500 font-bold mt-2 pl-2">
-              <span>Jan</span>
-              <span>Feb</span>
-              <span>Mar</span>
-              <span>Apr</span>
-              <span>May</span>
-              <span>Jun</span>
-            </div>
+          <div className="space-y-3">
+            {loading ? (
+              <div className="h-16 bg-zinc-800 rounded-xl animate-pulse" />
+            ) : (
+              <>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-zinc-400">Published Posts</span>
+                  <span className="text-sm font-bold text-emerald-400">{stats?.publishedBlogs ?? 0}</span>
+                </div>
+                <div className="w-full bg-zinc-800 rounded-full h-2">
+                  <div
+                    className="bg-emerald-500 h-2 rounded-full transition-all duration-500"
+                    style={{ width: stats?.totalBlogs ? `${((stats.publishedBlogs / stats.totalBlogs) * 100).toFixed(0)}%` : "0%" }}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-zinc-400">Draft Posts</span>
+                  <span className="text-sm font-bold text-amber-400">{(stats?.totalBlogs ?? 0) - (stats?.publishedBlogs ?? 0)}</span>
+                </div>
+                <div className="flex items-center justify-between pt-2 border-t border-white/[0.06]">
+                  <span className="text-sm font-semibold text-zinc-300">Total Posts</span>
+                  <span className="text-sm font-bold text-white">{stats?.totalBlogs ?? 0}</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
-        {/* Blog Views Bar Chart */}
-        <div className="bg-zinc-900 border border-white/10 rounded-2xl p-6 flex flex-col">
-          <div className="flex items-center justify-between mb-6">
+        {/* Car Listings breakdown */}
+        <div className="bg-zinc-900 border border-white/10 rounded-2xl p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 rounded-xl bg-purple-500/10">
+              <BarChart3 className="w-5 h-5 text-purple-400" />
+            </div>
             <div>
-              <h3 className="text-lg font-bold text-white">Blog Traffic</h3>
-              <p className="text-xs text-zinc-500 mt-0.5">Views per day (Last 7 Days)</p>
+              <h3 className="text-sm font-bold text-white">Car Listings Breakdown</h3>
+              <p className="text-xs text-zinc-500">Approval status overview</p>
             </div>
           </div>
-          
-          <div className="relative h-64 w-full bg-white/[0.02] rounded-xl border border-white/[0.05] p-6 flex flex-col justify-end mt-auto">
-             <div className="flex items-end justify-between h-44 w-full">
-                {/* Simulated Bars */}
-                {[40, 60, 30, 80, 50, 90, 70].map((height, i) => (
-                  <div key={i} className="flex flex-col items-center gap-2 group">
-                    <div className="text-[10px] text-zinc-500 opacity-0 group-hover:opacity-100 transition-opacity font-bold">{height * 100}</div>
-                    <div 
-                      className="w-8 sm:w-12 bg-gradient-to-t from-electric-blue/20 to-electric-blue rounded-t-sm group-hover:shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all cursor-pointer"
-                      style={{ height: `${height}%` }}
-                    />
+          <div className="space-y-3">
+            {loading ? (
+              <div className="h-16 bg-zinc-800 rounded-xl animate-pulse" />
+            ) : (
+              <>
+                {[
+                  { label: "Approved", value: stats?.approvedCars ?? 0, color: "bg-emerald-500", textColor: "text-emerald-400" },
+                  { label: "Pending Review", value: stats?.pendingCars ?? 0, color: "bg-amber-500", textColor: "text-amber-400" },
+                  { label: "Total Listings", value: stats?.totalCars ?? 0, color: "bg-blue-500", textColor: "text-blue-400" },
+                ].map(item => (
+                  <div key={item.label}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm text-zinc-400">{item.label}</span>
+                      <span className={`text-sm font-bold ${item.textColor}`}>{item.value}</span>
+                    </div>
+                    <div className="w-full bg-zinc-800 rounded-full h-1.5">
+                      <div
+                        className={`${item.color} h-1.5 rounded-full transition-all duration-500`}
+                        style={{ width: stats?.totalCars ? `${Math.min(100, (item.value / stats.totalCars) * 100).toFixed(0)}%` : "0%" }}
+                      />
+                    </div>
                   </div>
                 ))}
-             </div>
-             
-             <div className="flex justify-between w-full text-[10px] text-zinc-500 font-bold mt-4 pt-4 border-t border-white/10">
-               <span>Mon</span>
-               <span>Tue</span>
-               <span>Wed</span>
-               <span>Thu</span>
-               <span>Fri</span>
-               <span>Sat</span>
-               <span>Sun</span>
-             </div>
+              </>
+            )}
           </div>
         </div>
-
-        {/* Inspection Status Pie Chart */}
-        <div className="bg-zinc-900 border border-white/10 rounded-2xl p-6 flex flex-col">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="text-lg font-bold text-white">Inspection Status</h3>
-              <p className="text-xs text-zinc-500 mt-0.5">Distribution of all inspection requests</p>
-            </div>
-          </div>
-          
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-8 h-full">
-            <div className="relative w-48 h-48 shrink-0">
-              {/* Simulated CSS Pie Chart using conic-gradient */}
-              <div 
-                className="w-full h-full rounded-full shadow-[0_0_30px_rgba(0,0,0,0.5)]"
-                style={{
-                  background: `conic-gradient(
-                    #10b981 0% 45%, 
-                    #3b82f6 45% 75%, 
-                    #ef4444 75% 90%, 
-                    #f59e0b 90% 100%
-                  )`
-                }}
-              />
-              <div className="absolute inset-0 m-auto w-32 h-32 bg-zinc-900 rounded-full flex items-center justify-center flex-col">
-                <span className="text-2xl font-bold text-white">342</span>
-                <span className="text-[10px] text-zinc-500 uppercase tracking-wider mt-1">Total</span>
-              </div>
-            </div>
-
-            <div className="space-y-4 w-full sm:w-auto">
-              <div className="flex items-center justify-between gap-6">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-sm bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                  <span className="text-sm text-zinc-300">Completed</span>
-                </div>
-                <span className="font-bold text-white">45%</span>
-              </div>
-              <div className="flex items-center justify-between gap-6">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-sm bg-electric-blue shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
-                  <span className="text-sm text-zinc-300">Scheduled</span>
-                </div>
-                <span className="font-bold text-white">30%</span>
-              </div>
-              <div className="flex items-center justify-between gap-6">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-sm bg-neon-red shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
-                  <span className="text-sm text-zinc-300">Cancelled</span>
-                </div>
-                <span className="font-bold text-white">15%</span>
-              </div>
-              <div className="flex items-center justify-between gap-6">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-sm bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
-                  <span className="text-sm text-zinc-300">Pending</span>
-                </div>
-                <span className="font-bold text-white">10%</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Top Performing Cars */}
-        <div className="bg-zinc-900 border border-white/10 rounded-2xl p-6 flex flex-col">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="text-lg font-bold text-white">Top Performing Cars</h3>
-              <p className="text-xs text-zinc-500 mt-0.5">By views and inquiries</p>
-            </div>
-          </div>
-          
-          <div className="space-y-4">
-            {[
-              { name: "Honda Civic Oriel 1.8", views: "12.5K", inquiries: 45, trend: "+12%" },
-              { name: "Toyota Fortuner Legender", views: "9.2K", inquiries: 32, trend: "+8%" },
-              { name: "KIA Sportage Alpha", views: "8.1K", inquiries: 28, trend: "+5%" },
-              { name: "Suzuki Swift GLX CVT", views: "6.5K", inquiries: 15, trend: "-2%" },
-            ].map((car, i) => (
-              <div key={i} className="flex items-center justify-between p-3 rounded-xl border border-white/[0.05] bg-white/[0.02] hover:bg-white/[0.04] transition-colors cursor-pointer">
-                <div>
-                  <h4 className="text-sm font-bold text-white line-clamp-1">{car.name}</h4>
-                  <div className="flex items-center gap-3 mt-1 text-[11px] text-zinc-500">
-                    <span className="flex items-center gap-1"><Eye className="w-3 h-3 text-zinc-400" /> {car.views}</span>
-                    <span className="flex items-center gap-1"><Users className="w-3 h-3 text-zinc-400" /> {car.inquiries} leads</span>
-                  </div>
-                </div>
-                <div className={`text-xs font-bold px-2 py-1 rounded bg-white/5 ${car.trend.startsWith('+') ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {car.trend}
-                </div>
-              </div>
-            ))}
-          </div>
-          <Button variant="outline" className="w-full mt-4 border-white/10 text-zinc-400 hover:text-white">
-            View All Performance Data
-          </Button>
-        </div>
-
       </div>
+
+      {/* GA Traffic Info Box */}
+      <div className="bg-zinc-900 border border-white/10 rounded-2xl p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 rounded-xl bg-blue-500/10">
+            <Eye className="w-5 h-5 text-blue-400" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-white">Website Traffic</h3>
+            <p className="text-xs text-zinc-500">Page views, sessions & visitors — powered by Google Analytics</p>
+          </div>
+        </div>
+        {gaId ? (
+          <div className="text-center py-8">
+            <TrendingUp className="w-10 h-10 text-emerald-400 mx-auto mb-3" />
+            <p className="text-sm font-semibold text-white">GA4 is active and collecting data!</p>
+            <p className="text-xs text-zinc-500 mt-1 mb-4">View page views, sessions, bounce rate and more in your Google Analytics dashboard.</p>
+            <a
+              href="https://analytics.google.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0055FE] text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors"
+            >
+              <ExternalLink className="w-4 h-4" />
+              Open Google Analytics
+            </a>
+          </div>
+        ) : (
+          <div className="text-center py-8 border border-dashed border-white/10 rounded-xl">
+            <AlertCircle className="w-10 h-10 text-amber-400 mx-auto mb-3" />
+            <p className="text-sm font-semibold text-white">Google Analytics not configured</p>
+            <p className="text-xs text-zinc-500 mt-1 mb-4">
+              Add <code className="bg-white/5 px-1.5 py-0.5 rounded text-amber-300">NEXT_PUBLIC_GA_ID=G-XXXXXXXX</code> to your <strong>.env.local</strong> file
+            </p>
+            <ol className="text-xs text-zinc-500 text-left max-w-sm mx-auto space-y-1 mb-4">
+              <li>1. Go to <a href="https://analytics.google.com/" target="_blank" className="text-blue-400 underline">analytics.google.com</a> and create a GA4 property</li>
+              <li>2. Copy your Measurement ID (format: G-XXXXXXXXXX)</li>
+              <li>3. Open <code className="text-amber-300">.env.local</code> in your project and add: <code className="text-amber-300">NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX</code></li>
+              <li>4. Restart the dev server (<code className="text-amber-300">npm run dev</code>)</li>
+            </ol>
+          </div>
+        )}
+      </div>
+
     </div>
   );
 }

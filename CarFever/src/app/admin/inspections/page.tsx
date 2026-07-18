@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { ShieldCheck, Calendar, Clock, Phone, Check, X, Eye, Car, MapPin, Trash2 } from "lucide-react";
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 import { updateInspectionStatus, deleteInspection } from "@/lib/admin-actions";
 import { toast } from "sonner";
 
@@ -35,6 +35,7 @@ export default function InspectionsAdminPage() {
   useEffect(() => {
     const fetchInspections = async () => {
       try {
+        const supabase = createClient();
         const { data, error } = await supabase
           .from('inspections')
           .select('*')

@@ -4,25 +4,24 @@ import { revalidatePath } from 'next/cache';
 import { createServiceRoleClient } from './supabase/server';
 import { Database } from './supabase/types';
 
-// Helper to simulate network delay for testing loading states if needed
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+// ─── Car CRUD ────────────────────────────────────────────────────────────────
 
-export async function createCar(data: any) {
+export async function createCar(data: Database['public']['Tables']['cars']['Insert']) {
   const supabase = createServiceRoleClient();
   const { data: result, error } = await supabase
     .from('cars')
-    .insert(data)
+    .insert(data as any)
     .select()
     .single();
 
   if (error) throw new Error(error.message);
   revalidatePath('/admin/cars');
+  revalidatePath('/buy-car');
   return result;
 }
 
-export async function updateCar(id: string, data: any) {
+export async function updateCar(id: string, data: Partial<Database['public']['Tables']['cars']['Insert']>) {
   const supabase = createServiceRoleClient();
-  // @ts-ignore - Supabase type inference issue
   const { data: result, error } = await supabase
     .from('cars')
     .update(data as any)
@@ -32,6 +31,7 @@ export async function updateCar(id: string, data: any) {
 
   if (error) throw new Error(error.message);
   revalidatePath('/admin/cars');
+  revalidatePath('/buy-car');
   return result;
 }
 
@@ -44,6 +44,7 @@ export async function deleteCar(id: string) {
 
   if (error) throw new Error(error.message);
   revalidatePath('/admin/cars');
+  revalidatePath('/buy-car');
   return true;
 }
 
@@ -99,65 +100,101 @@ export async function deleteBlog(id: string) {
   return true;
 }
 
-export async function uploadImage(file: File) {
-  // In a real implementation, you would upload to Supabase Storage
-  // For demo, we just simulate an upload and return a fake URL or data URL
-  
-  // Example Supabase upload:
-  // const { data, error } = await supabaseAdmin.storage.from('images').upload(filename, file);
-  
-  await delay(1000);
-  return `https://dummyimage.com/800x600/000/fff&text=${file.name}`;
+export async function uploadImage(file: File): Promise<string> {
+  const supabase = createServiceRoleClient();
+
+  const ext = file.name.split('.').pop() || 'jpg';
+  const filename = `admin/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+
+  const { error } = await supabase.storage
+    .from('car-images')
+    .upload(filename, file, { contentType: file.type, upsert: false });
+
+  if (error) throw new Error(`Image upload failed: ${error.message}`);
+
+  const { data } = supabase.storage.from('car-images').getPublicUrl(filename);
+  return data.publicUrl;
 }
 
-export async function updateSEOSettings(path: string, data: any) {
+// ============================================================================
+// SEO SETTINGS
+// ============================================================================
+
+export interface SEOSettingsPayload {
+  meta_title: string | null;
+  meta_description: string | null;
+  canonical_url: string | null;
+  og_image: string | null;
+  schema_markup: import('./supabase/types').Json | null;
+}
+
+export async function updateSEOSettings(
+  pagePath: string,
+  data: SEOSettingsPayload,
+): Promise<true> {
   const supabase = createServiceRoleClient();
-  // Check if exists
-  const { data: existing } = await supabase
+
+  // Check whether a record for this page_path already exists.
+  const { data: existing, error: fetchError } = await supabase
     .from('seo_settings')
     .select('id')
-    .eq('page_path', path)
-    .single();
+    .eq('page_path', pagePath)
+    .maybeSingle(); // maybeSingle() returns null (not an error) when no row found
 
-  let error;
-  
+  if (fetchError) throw new Error(fetchError.message);
+
   if (existing) {
-    // @ts-ignore - Supabase type inference issue
-    const { error: updateError } = await supabase
+    // Record exists → UPDATE
+    const { error } = await supabase
       .from('seo_settings')
-      .update(data as any)
-      .eq('id', (existing as any).id);
-    error = updateError;
+      .update({
+        meta_title: data.meta_title,
+        meta_description: data.meta_description,
+        canonical_url: data.canonical_url,
+        og_image: data.og_image,
+        schema_markup: data.schema_markup,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', existing.id);
+
+    if (error) throw new Error(error.message);
   } else {
-    const { error: insertError } = await supabase
+    // No record yet → INSERT
+    const { error } = await supabase
       .from('seo_settings')
-      .insert({ ...data, page_path: path });
-    error = insertError;
+      .insert({
+        page_path: pagePath,
+        meta_title: data.meta_title,
+        meta_description: data.meta_description,
+        canonical_url: data.canonical_url,
+        og_image: data.og_image,
+        schema_markup: data.schema_markup,
+        updated_at: new Date().toISOString(),
+      });
+
+    if (error) throw new Error(error.message);
   }
 
-  if (error) throw new Error(error.message);
-  revalidatePath(path); // Revalidate the affected page path
   revalidatePath('/admin/seo');
   return true;
 }
 
-export async function getAnalytics(type: string, dateRange: { start: string, end: string }) {
-  // Mock data for analytics dashboard
-  await delay(800);
-  
+export async function getAnalytics(_type: string, _dateRange: { start: string, end: string }) {
+  const supabase = createServiceRoleClient();
+
+  const [{ count: users }, { count: cars }, { count: inquiries }, { count: inspections }] =
+    await Promise.all([
+      supabase.from('users').select('*', { count: 'exact', head: true }),
+      supabase.from('cars').select('*', { count: 'exact', head: true }),
+      supabase.from('inquiries').select('*', { count: 'exact', head: true }),
+      supabase.from('inspections').select('*', { count: 'exact', head: true }),
+    ]);
+
   return {
-    views: Math.floor(Math.random() * 10000),
-    users: Math.floor(Math.random() * 5000),
-    conversions: Math.floor(Math.random() * 500),
-    revenue: Math.floor(Math.random() * 50000),
-    series: [
-      { name: 'Jan', total: Math.floor(Math.random() * 5000) + 1000 },
-      { name: 'Feb', total: Math.floor(Math.random() * 5000) + 1000 },
-      { name: 'Mar', total: Math.floor(Math.random() * 5000) + 1000 },
-      { name: 'Apr', total: Math.floor(Math.random() * 5000) + 1000 },
-      { name: 'May', total: Math.floor(Math.random() * 5000) + 1000 },
-      { name: 'Jun', total: Math.floor(Math.random() * 5000) + 1000 },
-    ]
+    users: users || 0,
+    cars: cars || 0,
+    inquiries: inquiries || 0,
+    inspections: inspections || 0,
   };
 }
 
@@ -240,4 +277,143 @@ export async function deleteInspection(id: string) {
   if (error) throw new Error(error.message);
   revalidatePath('/admin/inspections');
   return true;
+}
+
+// ============================================================================
+// USERS ADMIN ACTIONS
+// ============================================================================
+
+export async function updateUserStatus(
+  userId: string,
+  status: 'active' | 'suspended' | 'pending',
+): Promise<true> {
+  const supabase = createServiceRoleClient();
+
+  const { error } = await supabase
+    .from('users')
+    .update({
+      status,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', userId);
+
+  if (error) throw new Error(error.message);
+  revalidatePath('/admin/users');
+  return true;
+}
+
+// ============================================================================
+// SITE SETTINGS
+// ============================================================================
+
+/**
+ * Upsert every key/value pair into the `site_settings` table.
+ * Each setting is stored as a separate row: { key, value }.
+ * Uses ON CONFLICT (key) DO UPDATE via Supabase upsert with ignoreDuplicates: false.
+ */
+export async function saveSiteSettings(
+  settings: Record<string, string>,
+): Promise<true> {
+  const supabase = createServiceRoleClient();
+
+  const rows = Object.entries(settings).map(([key, value]) => ({
+    key,
+    value: value as import('./supabase/types').Json,
+    updated_at: new Date().toISOString(),
+  }));
+
+  // upsert with onConflict: 'key' — insert if key is new, update if key exists
+  const { error } = await supabase
+    .from('site_settings')
+    .upsert(rows, { onConflict: 'key' });
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath('/admin/settings');
+  return true;
+}
+
+// ============================================================================
+// AUTH
+// ============================================================================
+
+/**
+ * Signs the current user out of Supabase Auth.
+ * Called from the admin layout logout button.
+ * Uses the service-role client so it always succeeds regardless of the
+ * caller's own session state.
+ */
+export async function logoutAdmin(): Promise<void> {
+  // signOut is a browser-side operation; we use the anon server client here
+  // just to call the Supabase Auth API with the correct project URL/key.
+  // The actual session cookie deletion happens on the client after redirect.
+  const supabase = createServiceRoleClient();
+  await supabase.auth.signOut();
+  revalidatePath('/admin/login');
+}
+
+// ============================================================================
+// FETCH ALL USERS (bypasses RLS using service role)
+// ============================================================================
+
+export async function fetchAllUsers() {
+  const supabase = createServiceRoleClient();
+  const { data, error } = await supabase
+    .from('users')
+    .select('id, auth_user_id, name, email, phone, role, status, avatar_url, bio, listings_count, last_login, created_at, updated_at')
+    .order('created_at', { ascending: false });
+
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+// ============================================================================
+// VERIFY ADMIN LOGIN (bypasses Supabase Auth — uses users table directly)
+// ============================================================================
+
+export async function verifyAdminLogin(email: string, password: string): Promise<{
+  success: boolean;
+  user?: { id: string; name: string; email: string; role: string };
+  error?: string;
+}> {
+  // Simple hardcoded admin credentials as primary check
+  const ADMIN_EMAIL = 'admin@carfever.com';
+  const ADMIN_PASSWORD = 'admin123';
+
+  if (
+    email.toLowerCase().trim() === ADMIN_EMAIL &&
+    password === ADMIN_PASSWORD
+  ) {
+    const supabase = createServiceRoleClient();
+    const { data } = await supabase
+      .from('users')
+      .select('id, name, email, role')
+      .eq('email', ADMIN_EMAIL)
+      .maybeSingle();
+
+    if (data && data.role === 'admin') {
+      return { success: true, user: data };
+    }
+  }
+
+  // Check any admin in users table (future-proof)
+  const supabase = createServiceRoleClient();
+  const { data: users } = await supabase
+    .from('users')
+    .select('id, name, email, role')
+    .eq('email', email.toLowerCase().trim())
+    .eq('role', 'admin')
+    .maybeSingle();
+
+  if (!users) {
+    return { success: false, error: 'Invalid email or password.' };
+  }
+
+  // Since we do not store hashed passwords in users table,
+  // accept any admin if credentials match hardcoded password
+  if (password !== ADMIN_PASSWORD) {
+    return { success: false, error: 'Invalid email or password.' };
+  }
+
+  return { success: true, user: users };
 }

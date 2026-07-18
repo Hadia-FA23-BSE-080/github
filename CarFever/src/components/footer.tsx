@@ -43,6 +43,7 @@ const footerLinks = {
   ],
   Company: [
     { label: "About Us", href: "/about" },
+    { label: "Become a Dealer", href: "/become-dealer" },
     { label: "Careers", href: "/careers" },
     { label: "Contact", href: "/contact" },
     { label: "Privacy Policy", href: "/privacy" },

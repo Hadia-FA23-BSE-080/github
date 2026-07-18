@@ -1,8 +1,8 @@
 'use server';
 
-import { createServerClient } from '@/lib/supabase/server';
+import { createServerClient, createServiceRoleClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
-import { createServiceRoleClient } from '@/lib/supabase/server';
+import type { Json } from '@/lib/supabase/types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -30,29 +30,27 @@ export interface FetchCarsResult {
 export interface ApprovedCar {
   id: string;
   title: string;
-  brand: string;
+  make: string;
   model: string;
   year: number;
   price: number;
-  price_display: string | null;
+  currency: string | null;
   mileage: number | null;
   fuel_type: string | null;
   transmission: string | null;
+  color: string | null;
   city: string | null;
-  location: string | null;
-  images: string[] | any;
-  badge: string | null;
-  rating: number | null;
-  engine: string | null;
+  images: string[] | Json;
   description: string | null;
-  features: string[] | any;
+  features: string[] | Json;
   slug: string | null;
+  condition: string | null;
   is_featured: boolean;
   created_at: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// FETCH APPROVED CARS  (replaces static car-data.ts on Buy Car page)
+// FETCH APPROVED CARS
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function fetchApprovedCars(
@@ -75,18 +73,18 @@ export async function fetchApprovedCars(
 
     let query = supabase
       .from('cars')
-      .select('id, title, brand, model, year, price, price_display, mileage, fuel_type, transmission, city, location, images, badge, rating, engine, description, features, slug, is_featured, created_at', { count: 'exact' })
+      .select('id, title, make, model, year, price, currency, mileage, fuel_type, transmission, color, exterior_color, city, description, features, images, slug, condition, is_featured, created_at', { count: 'exact' })
       .eq('status', 'approved');
 
     // ── Filters ──────────────────────────────────────────────────────────────
-    if (make) query = query.ilike('brand', `%${make}%`);
+    if (make) query = query.ilike('make', `%${make}%`);
     if (minPrice != null) query = query.gte('price', minPrice);
     if (maxPrice != null) query = query.lte('price', maxPrice);
     if (year) query = query.eq('year', year);
     if (fuelType) query = query.ilike('fuel_type', `%${fuelType}%`);
     if (search) {
       query = query.or(
-        `title.ilike.%${search}%,brand.ilike.%${search}%,model.ilike.%${search}%`
+        `title.ilike.%${search}%,make.ilike.%${search}%,model.ilike.%${search}%`
       );
     }
 
@@ -132,7 +130,7 @@ export async function fetchApprovedCars(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SUBMIT CAR LISTING  (Sell Car wizard → Supabase)
+// SUBMIT CAR LISTING
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function submitCarListing(formData: {
@@ -153,7 +151,6 @@ export async function submitCarListing(formData: {
   try {
     const supabase = createServiceRoleClient();
 
-    // Upload images to Supabase Storage ──────────────────────────────────────
     const imageUrls: string[] = [];
     for (const file of formData.images) {
       const ext = file.name.split('.').pop();
@@ -165,7 +162,6 @@ export async function submitCarListing(formData: {
 
       if (uploadError) {
         console.error('Image upload error:', uploadError.message);
-        // Non-fatal: continue without this image
         continue;
       }
 
@@ -178,42 +174,30 @@ export async function submitCarListing(formData: {
 
     const priceLacs = parseFloat(formData.price);
     const pricePKR = Math.round(priceLacs * 100000);
+    const title = `${formData.year} ${formData.make} ${formData.model}`;
+    const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now().toString().slice(-6);
 
     const { data, error } = await supabase
       .from('cars')
       .insert({
-        title: `${formData.year} ${formData.make} ${formData.model}`,
-        brand: formData.make,
+        title,
+        slug,
+        make: formData.make,
         model: formData.model,
         year: parseInt(formData.year),
         price: pricePKR,
-        price_display: `PKR ${priceLacs.toFixed(1)} Lacs`,
+        currency: 'PKR',
         mileage: formData.mileage ? parseInt(formData.mileage) : null,
-        transmission:
-          formData.transmission.charAt(0).toUpperCase() +
-          formData.transmission.slice(1),
-        fuel_type:
-          formData.fuelType.charAt(0).toUpperCase() +
-          formData.fuelType.slice(1),
-        engine: formData.engineCapacity
-          ? `${formData.engineCapacity} cc`
-          : null,
+        transmission: formData.transmission.charAt(0).toUpperCase() + formData.transmission.slice(1),
+        fuel_type: formData.fuelType.charAt(0).toUpperCase() + formData.fuelType.slice(1),
         city: formData.city,
-        location: formData.city,
-        description:
-          formData.description ||
-          `${formData.year} ${formData.make} ${formData.model} for sale.`,
-        images:
-          imageUrls.length > 0
-            ? imageUrls
-            : [
-                'https://images.unsplash.com/photo-1550355291-bbee04a92027?auto=format&fit=crop&w=600&q=80',
-              ],
+        description: formData.description || `${title} for sale.`,
+        images: imageUrls.length > 0 ? imageUrls : ['https://images.unsplash.com/photo-1550355291-bbee04a92027?auto=format&fit=crop&w=600&q=80'],
         features: [],
         status: 'pending' as const,
-        seller_name: formData.sellerName,
-        seller_phone: formData.sellerPhone,
-      } as any)
+        seller_name: formData.sellerName || null,
+        seller_phone: formData.sellerPhone || null,
+      })
       .select('id')
       .single();
 
@@ -227,14 +211,13 @@ export async function submitCarListing(formData: {
     console.error('submitCarListing error:', err);
     return {
       success: false,
-      error:
-        err instanceof Error ? err.message : 'Failed to submit car listing',
+      error: err instanceof Error ? err.message : 'Failed to submit car listing',
     };
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SUBMIT INQUIRY  (Contact Seller / Make an Offer)
+// SUBMIT INQUIRY
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function submitInquiry(formData: {
@@ -257,8 +240,6 @@ export async function submitInquiry(formData: {
         subject: formData.subject,
         message: formData.message,
         car_id: formData.carId || null,
-        status: 'pending' as const,
-        is_read: false,
       } as any)
       .select('id')
       .single();
@@ -313,8 +294,6 @@ export async function submitInspectionBooking(formData: {
         time_slot: formData.timeSlot,
         customer_name: formData.customerName,
         customer_phone: formData.customerPhone,
-        customer_email: formData.customerEmail || null,
-        status: 'pending' as const,
       } as any)
       .select('id')
       .single();
@@ -328,10 +307,83 @@ export async function submitInspectionBooking(formData: {
     console.error('submitInspectionBooking error:', err);
     return {
       success: false,
-      error:
-        err instanceof Error
-          ? err.message
-          : 'Failed to submit inspection booking',
+      error: err instanceof Error ? err.message : 'Failed to submit inspection booking',
     };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FETCH SINGLE CAR BY ID & INCREMENT VIEWS
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function getCarById(id: string): Promise<ApprovedCar | null> {
+  try {
+    const supabase = createServerClient();
+
+    const { data, error } = await supabase
+      .from('cars')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error || !data) {
+      console.error('getCarById error:', error);
+      return null;
+    }
+
+    return data as ApprovedCar;
+  } catch (err) {
+    console.error('getCarById exception:', err);
+    return null;
+  }
+}
+
+export async function incrementCarViews(id: string): Promise<void> {
+  try {
+    const supabase = createServiceRoleClient();
+    await supabase.rpc('increment_car_views', { car_id: id });
+  } catch (err) {
+    console.error('incrementCarViews error:', err);
+    try {
+      const supabase = createServiceRoleClient();
+      const { data: car } = await supabase.from('cars').select('views_count').eq('id', id).single();
+      if (car) {
+        await supabase
+          .from('cars')
+          .update({ views_count: (car.views_count || 0) + 1 })
+          .eq('id', id);
+      }
+    } catch (fallbackErr) {
+      console.error('incrementCarViews fallback error:', fallbackErr);
+    }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SYNC NEW USER (BYPASS RLS)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function syncUserToDatabase(user: {
+  name: string;
+  email: string;
+  role: 'buyer' | 'seller';
+}) {
+  try {
+    const supabase = createServiceRoleClient();
+    const { error } = await supabase
+      .from('users')
+      .insert({
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        status: 'active',
+      });
+
+    if (error) throw error;
+    revalidatePath('/admin/users');
+    return { success: true };
+  } catch (err) {
+    console.error('syncUserToDatabase error:', err);
+    return { success: false };
   }
 }

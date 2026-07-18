@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Activity, Car, Users, Eye, TrendingUp, TrendingDown, DollarSign, FileText, ShieldCheck, MessageSquare, ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 
 const S = {
   card: { background: "#1a1a1a", border: "1px solid #252525", borderRadius: 14, padding: 24 } as React.CSSProperties,
@@ -30,17 +30,37 @@ const recentActivity = [
 const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 export default function AdminDashboard() {
-  const [stats,   setStats]   = useState({ cars: 0, blogs: 0, users: 0, views: 0 });
+  const [stats,   setStats]   = useState({ cars: 0, blogs: 0, users: 0, views: 0, inspections: 0, inquiries: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
       try {
-        const [{ count: cars }, { count: blogs }] = await Promise.all([
+        const supabase = createClient();
+        const [
+          { count: cars },
+          { count: blogs },
+          { count: users },
+          { count: inspections },
+          { count: inquiries },
+          { data: carsViews },
+        ] = await Promise.all([
           supabase.from('cars').select('*', { count: 'exact', head: true }),
           supabase.from('blogs').select('*', { count: 'exact', head: true }),
+          supabase.from('users').select('*', { count: 'exact', head: true }),
+          supabase.from('inspections').select('*', { count: 'exact', head: true }),
+          supabase.from('inquiries').select('*', { count: 'exact', head: true }),
+          supabase.from('cars').select('views_count'),
         ]);
-        setStats({ cars: cars || 0, blogs: blogs || 0, users: 1284, views: 48320 });
+        const totalViews = (carsViews || []).reduce((sum: number, c: any) => sum + (c.views_count || 0), 0);
+        setStats({
+          cars: cars || 0,
+          blogs: blogs || 0,
+          users: users || 0,
+          views: totalViews,
+          inspections: inspections || 0,
+          inquiries: inquiries || 0,
+        });
       } catch { /* noop */ }
       setLoading(false);
     }
@@ -48,10 +68,12 @@ export default function AdminDashboard() {
   }, []);
 
   const statCards = [
-    { label: "Total Views",    value: loading ? "…" : stats.views.toLocaleString(), icon: Eye,         trend: "+12.5%", up: true,  color: "#0055FE" },
-    { label: "Car Listings",   value: loading ? "…" : stats.cars.toLocaleString(),  icon: Car,         trend: "+4.1%",  up: true,  color: "#FF6B00" },
-    { label: "Active Users",   value: loading ? "…" : stats.users.toLocaleString(), icon: Users,       trend: "-2.3%",  up: false, color: "#8B5CF6" },
-    { label: "Blog Posts",     value: loading ? "…" : stats.blogs.toLocaleString(), icon: FileText,    trend: "+8.7%",  up: true,  color: "#00B67A" },
+    { label: "Total Views",    value: loading ? "…" : stats.views.toLocaleString(),       icon: Eye,          trend: "+12.5%", up: true,  color: "#0055FE" },
+    { label: "Car Listings",   value: loading ? "…" : stats.cars.toLocaleString(),        icon: Car,          trend: "+4.1%",  up: true,  color: "#FF6B00" },
+    { label: "Active Users",   value: loading ? "…" : stats.users.toLocaleString(),       icon: Users,        trend: "+8.2%",  up: true,  color: "#8B5CF6" },
+    { label: "Blog Posts",     value: loading ? "…" : stats.blogs.toLocaleString(),       icon: FileText,     trend: "+8.7%",  up: true,  color: "#00B67A" },
+    { label: "Inspections",    value: loading ? "…" : stats.inspections.toLocaleString(), icon: ShieldCheck,  trend: "+15%",   up: true,  color: "#F59E0B" },
+    { label: "Inquiries",      value: loading ? "…" : stats.inquiries.toLocaleString(),   icon: MessageSquare,trend: "+6.3%",  up: true,  color: "#EF4444" },
   ];
 
   // Simple bar chart data (mock)

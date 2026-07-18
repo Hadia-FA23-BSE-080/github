@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Search, Plus, Edit, Trash2, Eye, MoreHorizontal } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, Eye, Globe } from 'lucide-react';
 import { toast } from 'sonner';
 import { deleteBlog, publishBlog } from '@/lib/admin-actions';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 
 const S = {
   btn: (color: string, bg: string): React.CSSProperties => ({ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 16px", background: bg, color, border: "none", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "none" }),
@@ -28,7 +28,7 @@ export default function AdminBlogsPage() {
   const [loading,  setLoading]  = useState(true);
   const [search,   setSearch]   = useState('');
   const [debounced, setDebounced] = useState('');
-  const [menu, setMenu] = useState<string | null>(null);
+  const [publishing, setPublishing] = useState<string | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(search), 450);
@@ -37,7 +37,8 @@ export default function AdminBlogsPage() {
 
   const fetchBlogs = useCallback(async () => {
     setLoading(true);
-    let q = supabase.from('blogs').select('id, title, status, views_count, created_at, featured_image, categories(name)').order('created_at', { ascending: false });
+    const supabase = createClient();
+    let q = supabase.from('blogs').select('id, title, status, created_at, featured_image, categories(name)').order('created_at', { ascending: false });
     if (debounced) q = q.ilike('title', `%${debounced}%`);
     const { data, error } = await q;
     if (error) toast.error('Failed to load blogs');
@@ -54,12 +55,13 @@ export default function AdminBlogsPage() {
   };
 
   const handlePublish = async (id: string) => {
+    setPublishing(id);
     try {
       await publishBlog(id);
       toast.success('Published!');
       setBlogs(b => b.map(x => x.id === id ? { ...x, status: 'published', published_at: new Date().toISOString() } : x));
     } catch { toast.error('Publish failed'); }
-    setMenu(null);
+    setPublishing(null);
   };
 
   return (
@@ -112,38 +114,48 @@ export default function AdminBlogsPage() {
                 </td>
                 <td style={{ ...S.td, color: "#666" }}>{(blog.categories as any)?.name || "Uncategorized"}</td>
                 <td style={S.td}><StatusBadge status={blog.status} /></td>
-                <td style={{ ...S.td, color: "#555" }}>{(blog.views_count || 0).toLocaleString()}</td>
-                <td style={{ ...S.td, textAlign: "right", position: "relative" }}>
-                  <div style={{ position: "relative", display: "inline-block" }}>
-                    <button onClick={() => setMenu(menu === blog.id ? null : blog.id)}
-                      style={{ background: "none", border: "none", cursor: "pointer", color: "#555", padding: 6, borderRadius: 6 }}>
-                      <MoreHorizontal style={{ width: 17, height: 17 }} />
-                    </button>
-                    {menu === blog.id && (
-                      <>
-                        <div onClick={() => setMenu(null)} style={{ position: "fixed", inset: 0, zIndex: 20 }} />
-                        <div style={{ position: "absolute", right: 0, top: "100%", width: 160, background: "#1e1e1e", border: "1px solid #2a2a2a", borderRadius: 12, boxShadow: "0 16px 40px rgba(0,0,0,0.5)", zIndex: 30, overflow: "hidden", marginTop: 4 }}>
-                          <Link href={`/admin/blogs/new?id=${blog.id}`} onClick={() => setMenu(null)}
-                            style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", fontSize: 12, color: "#bbb", textDecoration: "none" }}>
-                            <Edit style={{ width: 13, height: 13 }} /> Edit
-                          </Link>
-                          <Link href={`/blog/${blog.id}`} target="_blank" onClick={() => setMenu(null)}
-                            style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", fontSize: 12, color: "#bbb", textDecoration: "none" }}>
-                            <Eye style={{ width: 13, height: 13 }} /> Preview
-                          </Link>
-                          {blog.status !== 'published' && (
-                            <button onClick={() => handlePublish(blog.id)}
-                              style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", fontSize: 12, color: "#00B67A", background: "none", border: "none", cursor: "pointer" }}>
-                              <Eye style={{ width: 13, height: 13 }} /> Publish
-                            </button>
-                          )}
-                          <button onClick={() => handleDelete(blog.id)}
-                            style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", fontSize: 12, color: "#ef4444", background: "none", border: "none", cursor: "pointer" }}>
-                            <Trash2 style={{ width: 13, height: 13 }} /> Delete
-                          </button>
-                        </div>
-                      </>
+                <td style={{ ...S.td, color: "#555" }}>—</td>
+                <td style={{ ...S.td, textAlign: "right" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
+                    {/* Edit */}
+                    <Link
+                      href={`/admin/blogs/new?id=${blog.id}`}
+                      title="Edit"
+                      style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, borderRadius: 8, background: "rgba(0,85,254,0.1)", color: "#0055FE", border: "1px solid rgba(0,85,254,0.2)", textDecoration: "none" }}
+                    >
+                      <Edit style={{ width: 13, height: 13 }} />
+                    </Link>
+
+                    {/* Preview */}
+                    <Link
+                      href={`/blog/${blog.id}`}
+                      target="_blank"
+                      title="Preview"
+                      style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, borderRadius: 8, background: "rgba(100,100,100,0.1)", color: "#888", border: "1px solid rgba(255,255,255,0.06)", textDecoration: "none" }}
+                    >
+                      <Eye style={{ width: 13, height: 13 }} />
+                    </Link>
+
+                    {/* Publish (only if draft) */}
+                    {blog.status !== 'published' && (
+                      <button
+                        onClick={() => handlePublish(blog.id)}
+                        disabled={publishing === blog.id}
+                        title="Publish"
+                        style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, borderRadius: 8, background: "rgba(0,182,122,0.1)", color: "#00B67A", border: "1px solid rgba(0,182,122,0.2)", cursor: "pointer" }}
+                      >
+                        <Globe style={{ width: 13, height: 13 }} />
+                      </button>
                     )}
+
+                    {/* Delete */}
+                    <button
+                      onClick={() => handleDelete(blog.id)}
+                      title="Delete"
+                      style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, borderRadius: 8, background: "rgba(239,68,68,0.1)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.2)", cursor: "pointer" }}
+                    >
+                      <Trash2 style={{ width: 13, height: 13 }} />
+                    </button>
                   </div>
                 </td>
               </tr>

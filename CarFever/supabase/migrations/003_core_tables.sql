@@ -289,3 +289,18 @@ END $$;
 -- INSERT INTO public.users (name, email, role, status)
 -- VALUES ('Admin User', 'admin@carfever.com', 'admin', 'active')
 -- ON CONFLICT (email) DO NOTHING;
+
+-- =============================================================================
+-- RPC: Increment Car Views
+-- =============================================================================
+CREATE OR REPLACE FUNCTION public.increment_car_views(car_id uuid)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  UPDATE public.cars
+  SET views_count = views_count + 1
+  WHERE id = car_id;
+END;
+$$;

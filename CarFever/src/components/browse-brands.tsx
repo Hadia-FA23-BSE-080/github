@@ -42,7 +42,7 @@ export function BrowseByBrand() {
           {brands.map((brand) => (
             <Link
               key={brand.name}
-              href={`/buy-car?brand=${brand.name.toLowerCase()}`}
+              href={`/buy-car?search=${brand.name.toLowerCase()}`}
               className="group relative flex flex-col items-center gap-3 p-6 rounded-2xl bg-white border border-gray-200 hover:border-[#0055FE]/30 transition-all duration-500 hover:shadow-lg hover:shadow-blue-500/5"
             >
               {/* Logo emoji placeholder */}

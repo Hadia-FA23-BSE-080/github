@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Search, Plus, Edit, Trash2, CheckCircle, XCircle, MoreHorizontal, Car as CarIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { deleteCar, approveCar, rejectCar } from '@/lib/admin-actions';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 
 const S = {
   btn: (color: string, bg: string): React.CSSProperties => ({ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 16px", background: bg, color, border: "none", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "none", transition: "opacity 0.15s" }),
@@ -42,7 +42,8 @@ export default function AdminCarsPage() {
 
   const fetchCars = useCallback(async () => {
     setLoading(true);
-    let q = supabase.from('cars').select('id, title, brand, year, price, status, images, created_at').order('created_at', { ascending: false });
+    const supabase = createClient();
+    let q = supabase.from('cars').select('id, title, make, model, year, price, status, images, created_at').order('created_at', { ascending: false });
     if (debounced) q = q.ilike('title', `%${debounced}%`);
     const { data, error } = await q;
     if (error) toast.error('Failed to load cars');
@@ -87,12 +88,12 @@ export default function AdminCarsPage() {
       </div>
 
       {/* Table */}
-      <div style={{ background: "#1a1a1a", border: "1px solid #252525", borderRadius: 14, overflow: "hidden" }}>
+      <div style={{ background: "#1a1a1a", border: "1px solid #252525", borderRadius: 14, overflow: "visible" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr>
               {["Car", "Price", "Status", "Added", "Actions"].map((h, i) => (
-                <th key={h} style={{ ...S.th, textAlign: i === 4 ? "right" : "left" }}>{h}</th>
+                <th key={h} style={{ ...S.th, textAlign: i === 4 ? "right" : "left", borderTopLeftRadius: i === 0 ? 14 : 0, borderTopRightRadius: i === 4 ? 14 : 0 }}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -114,7 +115,7 @@ export default function AdminCarsPage() {
                     </div>
                     <div>
                       <p style={{ fontWeight: 600, color: "#ddd", margin: 0, fontSize: 13 }}>{car.title}</p>
-                      <p style={{ fontSize: 11, color: "#555", margin: "2px 0 0" }}>{car.brand} • {car.year}</p>
+                      <p style={{ fontSize: 11, color: "#555", margin: "2px 0 0" }}>{car.make} • {car.year}</p>
                     </div>
                   </div>
                 </td>

@@ -17,7 +17,9 @@ import {
   Search as SearchIcon,
   ChevronDown,
   X,
+  Building2,
 } from "lucide-react";
+import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 
 interface MenuItem {
   label: string;
@@ -32,6 +34,7 @@ const menuItems: MenuItem[] = [
   { label: "Inspections",       href: "/admin/inspections",  icon: ShieldCheck },
   { label: "Inquiries",         href: "/admin/inquiries",    icon: MessageSquare },
   { label: "Manage Users",      href: "/admin/users",        icon: Users },
+  { label: "Dealers",           href: "/admin/dealers",      icon: Building2 },
   { label: "SEO Settings",      href: "/admin/seo",          icon: SearchIcon },
   { label: "Site Settings",     href: "/admin/settings",     icon: Settings },
   { label: "Analytics",         href: "/admin/analytics",    icon: BarChart3 },
@@ -44,6 +47,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [adminUser,          setAdminUser]          = useState<any>(null);
   const [profileOpen,        setProfileOpen]        = useState(false);
   const [sidebarOpen,        setSidebarOpen]        = useState(false);
+  const { newListingsCount, newInquiriesCount, clearCounts } = useRealtimeNotifications();
 
   useEffect(() => {
     if (pathname === "/admin/login") return;
@@ -58,6 +62,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const handleLogout = () => {
     localStorage.removeItem("cf_admin_user");
+    setAdminUser(null);
+    setIsAuthenticated(false);
     router.push("/admin/login");
   };
 
@@ -114,10 +120,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {menuItems.map((item) => {
             const Icon = item.icon;
             const active = pathname === item.href || pathname.startsWith(item.href + "/");
+            const isCarsItem = item.href === "/admin/cars";
+            const isInquiriesItem = item.href === "/admin/inquiries";
+            const count = isCarsItem ? newListingsCount : isInquiriesItem ? newInquiriesCount : 0;
+            
             return (
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={() => {
+                  if (isCarsItem || isInquiriesItem) {
+                    clearCounts();
+                  }
+                }}
                 style={{
                   display: "flex", alignItems: "center", gap: 10,
                   padding: "10px 14px", borderRadius: 10, marginBottom: 2,
@@ -130,6 +145,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               >
                 <Icon style={{ width: 16, height: 16, color: active ? "#0055FE" : "#555", flexShrink: 0 }} />
                 {item.label}
+                {count > 0 && (
+                  <span style={{ 
+                    marginLeft: "auto",
+                    background: "#ef4444",
+                    color: "white",
+                    fontSize: 10,
+                    fontWeight: 700,
+                    padding: "2px 8px",
+                    borderRadius: 10
+                  }}>
+                    {count}
+                  </span>
+                )}
               </Link>
             );
           })}
@@ -171,8 +199,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {menuItems.map((item) => {
               const Icon = item.icon;
               const active = pathname === item.href;
+              const isCarsItem = item.href === "/admin/cars";
+              const isInquiriesItem = item.href === "/admin/inquiries";
+              const count = isCarsItem ? newListingsCount : isInquiriesItem ? newInquiriesCount : 0;
+              
               return (
-                <Link key={item.href} href={item.href} onClick={() => setSidebarOpen(false)}
+                <Link key={item.href} href={item.href} onClick={() => {
+                  setSidebarOpen(false);
+                  if (isCarsItem || isInquiriesItem) {
+                    clearCounts();
+                  }
+                }}
                   style={{
                     display: "flex", alignItems: "center", gap: 10,
                     padding: "10px 14px", borderRadius: 10, marginBottom: 2,
@@ -183,6 +220,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   }}>
                   <Icon style={{ width: 16, height: 16, color: active ? "#0055FE" : "#555" }} />
                   {item.label}
+                  {count > 0 && (
+                    <span style={{ 
+                      marginLeft: "auto",
+                      background: "#ef4444",
+                      color: "white",
+                      fontSize: 10,
+                      fontWeight: 700,
+                      padding: "2px 8px",
+                      borderRadius: 10
+                    }}>
+                      {count}
+                    </span>
+                  )}
                 </Link>
               );
             })}
@@ -219,9 +269,30 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
 
             {/* Bell */}
-            <button style={{ position: "relative", background: "none", border: "none", padding: 8, borderRadius: 8, color: "#666", cursor: "pointer" }}>
+            <button 
+              style={{ position: "relative", background: "none", border: "none", padding: 8, borderRadius: 8, color: "#666", cursor: "pointer" }}
+              onClick={() => {
+                clearCounts();
+              }}
+            >
               <Bell style={{ width: 17, height: 17 }} />
-              <span style={{ position: "absolute", top: 6, right: 6, width: 7, height: 7, background: "#ef4444", borderRadius: "50%" }} />
+              {(newListingsCount + newInquiriesCount) > 0 && (
+                <span style={{ 
+                  position: "absolute", 
+                  top: 2, 
+                  right: 2, 
+                  background: "#ef4444", 
+                  color: "white", 
+                  fontSize: 10, 
+                  fontWeight: 700, 
+                  padding: "2px 6px", 
+                  borderRadius: 10,
+                  minWidth: 18,
+                  textAlign: "center"
+                }}>
+                  {newListingsCount + newInquiriesCount}
+                </span>
+              )}
             </button>
 
             <div style={{ width: 1, height: 24, background: "#222" }} />

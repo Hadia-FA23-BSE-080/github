@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
@@ -22,12 +22,13 @@ import {
   User,
   Mail,
   FileText,
-  DollarSign
+  DollarSign,
+  Loader2
 } from "lucide-react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { getCarById, getAllCars } from "@/lib/car-data";
-import { submitInquiry } from "@/lib/actions";
+import { getCarById, incrementCarViews, fetchApprovedCars, type ApprovedCar } from "@/lib/server-actions";
+import { submitInquiry } from "@/lib/server-actions";
 
 export default function CarDetailsPage() {
   const params = useParams();
@@ -41,17 +42,63 @@ export default function CarDetailsPage() {
   const [contactForm, setContactForm] = useState({ name: "", email: "", phone: "", message: "" });
   const [offerForm, setOfferForm] = useState({ name: "", email: "", phone: "", offerPrice: "", note: "" });
   const [formError, setFormError] = useState("");
+  const [car, setCar] = useState<ApprovedCar | null>(null);
+  const [similarCars, setSimilarCars] = useState<ApprovedCar[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const allCars = getAllCars();
-  const car = getCarById(Number(id)) || allCars[0];
-  
-  let similarCars = allCars.filter(c => c.make === car.make && c.id !== car.id);
-  if (similarCars.length < 4) {
-    const additional = allCars.filter(c => c.id !== car.id && c.make !== car.make);
-    similarCars = [...similarCars, ...additional].slice(0, 4);
-  } else {
-    similarCars = similarCars.slice(0, 4);
+  useEffect(() => {
+    async function loadCar() {
+      setLoading(true);
+      const fetchedCar = await getCarById(id);
+      setCar(fetchedCar);
+      
+      // Increment views
+      await incrementCarViews(id);
+      
+      // Fetch similar cars (same brand)
+      if (fetchedCar) {
+        const { cars } = await fetchApprovedCars({ make: fetchedCar.make, limit: 5 });
+        setSimilarCars(cars.filter(c => c.id !== fetchedCar.id));
+      }
+      setLoading(false);
+    }
+    
+    if (id) loadCar();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen pt-32 lg:pt-24 bg-[#F8F9FA] flex items-center justify-center">
+        <Loader2 className="w-10 h-10 animate-spin text-[#0055FE]" />
+      </div>
+    );
   }
+  
+  if (!car) {
+    return (
+      <div className="min-h-screen pt-32 lg:pt-24 bg-[#F8F9FA] flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Car Not Found</h2>
+          <p className="text-gray-500 mb-4">This listing may have been removed or expired.</p>
+          <Link href="/buy-car">
+            <Button className="bg-[#0055FE] hover:bg-blue-700 text-white">
+              Browse All Cars
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+  
+  // Helper to format price from number (in PKR, probably) to display string
+  const formatPrice = (price: number) => {
+    const lacs = price / 100000;
+    return `PKR ${lacs.toFixed(1)} Lacs`;
+  };
+  
+  const images: string[] = Array.isArray(car.images) && car.images.length > 0 
+    ? (car.images as string[])
+    : ['https://images.unsplash.com/photo-1550355291-bbee04a92027?auto=format&fit=crop&w=600&q=80'];
 
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -123,7 +170,7 @@ export default function CarDetailsPage() {
             <div className="w-full lg:w-[60%]">
               <div className="relative aspect-[16/10] rounded-2xl overflow-hidden mb-4 bg-gray-100 group border border-gray-200">
                 <img 
-                  src={(car.images || [car.image])[activeImage % (car.images || [car.image]).length]} 
+                  src={images[activeImage]} 
                   alt={car.title} 
                   loading="lazy"
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
@@ -149,19 +196,21 @@ export default function CarDetailsPage() {
               </div>
 
               {/* Thumbnails */}
-              <div className="flex gap-4 overflow-x-auto snap-x scrollbar-hide pb-2">
-                {(car.images || [car.image]).map((img, idx) => (
-                  <button 
-                    key={idx}
-                    onClick={() => setActiveImage(idx)}
-                    className={`relative w-24 h-16 sm:w-32 sm:h-20 shrink-0 rounded-lg overflow-hidden snap-center border-2 transition-all active:scale-95 ${
-                      activeImage === idx ? 'border-[#0055FE] scale-105 opacity-100 shadow-md' : 'border-transparent opacity-60 hover:opacity-100'
-                    }`}
-                  >
-                    <img src={img} alt={`Thumb ${idx}`} className="w-full h-full object-cover rounded-md" />
-                  </button>
-                ))}
-              </div>
+              {images.length > 1 && (
+                <div className="flex gap-4 overflow-x-auto snap-x scrollbar-hide pb-2">
+                  {images.map((img, idx) => (
+                    <button 
+                      key={idx}
+                      onClick={() => setActiveImage(idx)}
+                      className={`relative w-24 h-16 sm:w-32 sm:h-20 shrink-0 rounded-lg overflow-hidden snap-center border-2 transition-all active:scale-95 ${
+                        activeImage === idx ? 'border-[#0055FE] scale-105 opacity-100 shadow-md' : 'border-transparent opacity-60 hover:opacity-100'
+                      }`}
+                    >
+                      <img src={img} alt={`Thumb ${idx}`} className="w-full h-full object-cover rounded-md" />
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Right: Details (40%) */}
@@ -185,14 +234,14 @@ export default function CarDetailsPage() {
               
               <div className="flex items-center gap-2 text-gray-500 text-sm mb-6 pb-6 border-b border-gray-200">
                 <MapPin className="w-4 h-4 text-gray-400" />
-                {car.location}
+                {car.city || 'Location not specified'}
               </div>
 
               {/* Price */}
               <div className="mb-6 sm:mb-8">
                 <div className="text-sm text-gray-500 mb-1">Asking Price</div>
                 <div className="text-3xl sm:text-4xl font-bold text-[#0055FE]">
-                  {car.priceDisplay}
+                  {formatPrice(car.price)}
                 </div>
               </div>
 
@@ -206,22 +255,24 @@ export default function CarDetailsPage() {
                 <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-white border border-gray-200 shadow-sm">
                   <Gauge className="w-5 h-5 text-gray-400 mb-2" />
                   <span className="text-[10px] text-gray-500 font-medium">Mileage</span>
-                  <span className="text-sm font-semibold text-gray-900 truncate max-w-full">{car.mileage}</span>
+                  <span className="text-sm font-semibold text-gray-900 truncate max-w-full">
+                    {car.mileage ? `${car.mileage.toLocaleString()} km` : 'N/A'}
+                  </span>
                 </div>
                 <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-white border border-gray-200 shadow-sm">
                   <Fuel className="w-5 h-5 text-gray-400 mb-2" />
                   <span className="text-[10px] text-gray-500 font-medium">Fuel</span>
-                  <span className="text-sm font-semibold text-gray-900">{car.fuel}</span>
+                  <span className="text-sm font-semibold text-gray-900">{car.fuel_type || 'Petrol'}</span>
                 </div>
                 <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-white border border-gray-200 shadow-sm">
                   <Zap className="w-5 h-5 text-gray-400 mb-2" />
                   <span className="text-[10px] text-gray-500 font-medium">Engine</span>
-                  <span className="text-sm font-semibold text-gray-900">{car.engine}</span>
+                  <span className="text-sm font-semibold text-gray-900">{car.transmission || 'N/A'}</span>
                 </div>
                 <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-white border border-gray-200 shadow-sm col-span-2 sm:col-span-1">
                   <CircleDot className="w-5 h-5 text-gray-400 mb-2" />
                   <span className="text-[10px] text-gray-500 font-medium">Transmission</span>
-                  <span className="text-sm font-semibold text-gray-900">{car.transmission}</span>
+                  <span className="text-sm font-semibold text-gray-900">{car.transmission || 'Automatic'}</span>
                 </div>
               </div>
 
@@ -262,33 +313,32 @@ export default function CarDetailsPage() {
               {activeTab === 'description' && (
                 <div className="text-gray-600 leading-relaxed space-y-4">
                   <p>
-                    Up for sale is a meticulously maintained {car.title} {car.year} model. 
-                    This car has been strictly driven in {car.location.split(',').pop()} and is in total pristine condition.
-                    It comes with a powerful {car.engine} engine that delivers excellent fuel economy without compromising on performance.
+                    {car.description || `Up for sale is a meticulously maintained ${car.title} ${car.year} model.`}
                   </p>
-                  <p>
-                    <strong className="text-gray-900">Key Highlights:</strong>
-                  </p>
-                  <ul className="list-disc pl-5 space-y-2 text-gray-600">
-                    <li>1st Owner, registered in Lahore.</li>
-                    <li>100% original paint, no touch-ups (Bumper to Bumper genuine).</li>
-                    <li>Token tax paid up to date.</li>
-                    <li>Original keys and manuals available.</li>
-                    <li>Maintained strictly from authorized Toyota Dealership (Service history available).</li>
-                  </ul>
-                  <p>Price is slightly negotiable for serious buyers. Please contact during office hours.</p>
                 </div>
               )}
               {activeTab === 'features' && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-4 gap-x-8 text-sm text-gray-600">
-                  <div className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#0055FE]" /> ABS Brakes</div>
-                  <div className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#0055FE]" /> Airbags</div>
-                  <div className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#0055FE]" /> Power Windows</div>
-                  <div className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#0055FE]" /> Power Steering</div>
-                  <div className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#0055FE]" /> Immobilizer Key</div>
-                  <div className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#0055FE]" /> Keyless Entry</div>
-                  <div className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#0055FE]" /> Alloy Rims</div>
-                  <div className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#0055FE]" /> Rear Camera</div>
+                  {Array.isArray(car.features) && car.features.length > 0 
+                    ? (car.features as string[]).map((feature, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 rounded-full bg-[#0055FE]" />
+                          {String(feature)}
+                        </div>
+                      ))
+                    : (
+                      <>
+                        <div className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#0055FE]" /> ABS Brakes</div>
+                        <div className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#0055FE]" /> Airbags</div>
+                        <div className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#0055FE]" /> Power Windows</div>
+                        <div className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#0055FE]" /> Power Steering</div>
+                        <div className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#0055FE]" /> Immobilizer Key</div>
+                        <div className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#0055FE]" /> Keyless Entry</div>
+                        <div className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#0055FE]" /> Alloy Rims</div>
+                        <div className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#0055FE]" /> Rear Camera</div>
+                      </>
+                    )
+                  }
                 </div>
               )}
               {activeTab === 'inspection' && (
@@ -308,45 +358,54 @@ export default function CarDetailsPage() {
           </div>
 
           {/* Similar Cars Section */}
-          <div>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">Similar <span className="text-[#0055FE]">Cars</span></h2>
-              <Button variant="link" className="text-[#0055FE] hover:text-blue-700 px-0">View All</Button>
-            </div>
-            
-            <div className="flex overflow-x-auto snap-x snap-mandatory gap-6 pb-8 scrollbar-hide">
-              {similarCars.map((car) => (
-                <Link key={car.id} href={`/buy-car/${car.id}`} suppressHydrationWarning className="min-w-[300px] sm:min-w-[350px] snap-center shrink-0 group rounded-xl overflow-hidden bg-white border border-gray-200 transition-all duration-300 hover:shadow-md hover:-translate-y-1 flex flex-col">
-                  <div className="relative aspect-[16/11] overflow-hidden shrink-0">
-                    <img
-                      src={(car.images || [car.image])[0]}
-                      alt={car.title}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="text-base font-semibold text-gray-900 mb-3 line-clamp-1 group-hover:text-[#0055FE] transition-colors">{car.title}</h3>
-                    <div className="grid grid-cols-2 gap-2 mb-4 text-gray-500">
-                      <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-100 rounded px-2 py-1">
-                        <Calendar className="w-3 h-3 text-gray-400" />
-                        <span className="text-xs font-medium text-gray-700">{car.year}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-100 rounded px-2 py-1">
-                        <Gauge className="w-3 h-3 text-gray-400" />
-                        <span className="text-xs font-medium text-gray-700">{car.mileage}</span>
-                      </div>
-                    </div>
-                    <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
-                      <span className="text-lg font-bold text-[#0055FE]">{car.priceDisplay}</span>
-                      <ChevronRight className="w-4 h-4 text-[#0055FE]" />
-                    </div>
-                  </div>
+          {similarCars.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Similar <span className="text-[#0055FE]">Cars</span></h2>
+                <Link href="/buy-car">
+                  <Button variant="link" className="text-[#0055FE] hover:text-blue-700 px-0">View All</Button>
                 </Link>
-              ))}
+              </div>
+              
+              <div className="flex overflow-x-auto snap-x snap-mandatory gap-6 pb-8 scrollbar-hide">
+                {similarCars.map((similarCar) => (
+                  <Link key={similarCar.id} href={`/buy-car/${similarCar.id}`} className="min-w-[300px] sm:min-w-[350px] snap-center shrink-0 group rounded-xl overflow-hidden bg-white border border-gray-200 transition-all duration-300 hover:shadow-md hover:-translate-y-1 flex flex-col">
+                    <div className="relative aspect-[16/11] overflow-hidden shrink-0">
+                      <img
+                        src={Array.isArray(similarCar.images) && similarCar.images.length > 0 
+                          ? String(similarCar.images[0])
+                          : 'https://images.unsplash.com/photo-1550355291-bbee04a92027?auto=format&fit=crop&w=600&q=80'}
+                        alt={similarCar.title}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+                    </div>
+                    <div className="p-4">
+                      <h3 className="text-base font-semibold text-gray-900 mb-3 line-clamp-1 group-hover:text-[#0055FE] transition-colors">{similarCar.title}</h3>
+                      <div className="grid grid-cols-2 gap-2 mb-4 text-gray-500">
+                        <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-100 rounded px-2 py-1">
+                          <Calendar className="w-3 h-3 text-gray-400" />
+                          <span className="text-xs font-medium text-gray-700">{similarCar.year}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-100 rounded px-2 py-1">
+                          <Gauge className="w-3 h-3 text-gray-400" />
+                          <span className="text-xs font-medium text-gray-700">
+                            {similarCar.mileage ? `${similarCar.mileage.toLocaleString()} km` : 'N/A'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
+                        <span className="text-lg font-bold text-[#0055FE]">
+                          {formatPrice(similarCar.price)}
+                        </span>
+                        <ChevronRight className="w-4 h-4 text-[#0055FE]" />
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
             </div>
-          </div>
-
+          )}
         </div>
       </main>
       <Footer />
@@ -433,7 +492,7 @@ export default function CarDetailsPage() {
               <>
                 <div className="mb-6">
                   <h2 className="text-xl font-bold text-gray-900 mb-1">Make an Offer</h2>
-                  <p className="text-gray-500 text-sm">Asking: <span className="text-[#0055FE] font-bold">{car.priceDisplay}</span></p>
+                  <p className="text-gray-500 text-sm">Asking: <span className="text-[#0055FE] font-bold">{formatPrice(car.price)}</span></p>
                 </div>
                 <form onSubmit={handleOfferSubmit} className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

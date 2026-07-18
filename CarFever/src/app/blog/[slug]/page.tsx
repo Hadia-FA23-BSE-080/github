@@ -108,8 +108,7 @@ async function getPost(slug: string) {
     .from('blogs')
     .select(`
       *,
-      categories (name, slug),
-      author:author_id (name, avatar_url, bio)
+      categories (name, slug)
     `)
     .eq('slug', slug)
     .single();
@@ -126,8 +125,7 @@ async function getRelatedPosts(categoryId: string, currentPostId: string) {
     .from('blogs')
     .select(`
       id, slug, title, excerpt, featured_image, published_at, views_count,
-      categories (name, slug),
-      author:author_id (name, avatar_url)
+      categories (name, slug)
     `)
     .eq('category_id', categoryId)
     .eq('status', 'published')

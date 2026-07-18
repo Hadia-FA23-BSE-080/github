@@ -26,15 +26,36 @@ import {
   Loader2,
 } from 'lucide-react';
 import Link from 'next/link';
-import { isInWishlist, addToWishlist, removeFromWishlist } from '@/lib/wishlist';
 import { fetchApprovedCars, type ApprovedCar, type FetchCarsFilters } from '@/lib/server-actions';
+
+// ── Wishlist helpers (UUID strings) ──────────────────────────────────────────
+function getWishlistIds(): string[] {
+  if (typeof window === 'undefined') return [];
+  try { return JSON.parse(localStorage.getItem('cf_wishlist_ids') || '[]'); } catch { return []; }
+}
+function addToWishlistId(id: string): void {
+  if (typeof window === 'undefined') return;
+  const ids = getWishlistIds();
+  if (!ids.includes(id)) {
+    localStorage.setItem('cf_wishlist_ids', JSON.stringify([...ids, id]));
+    window.dispatchEvent(new CustomEvent('wishlist-updated'));
+  }
+}
+function removeFromWishlistId(id: string): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem('cf_wishlist_ids', JSON.stringify(getWishlistIds().filter((x) => x !== id)));
+  window.dispatchEvent(new CustomEvent('wishlist-updated'));
+}
+function isInWishlistId(id: string): boolean {
+  return getWishlistIds().includes(id);
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function formatPrice(price: number, priceDisplay: string | null): string {
-  if (priceDisplay) return priceDisplay;
+function formatPrice(price: number, currency?: string | null): string {
   const lacs = price / 100000;
-  return `PKR ${lacs % 1 === 0 ? lacs.toFixed(0) : lacs.toFixed(1)} Lacs`;
+  const prefix = currency || 'PKR';
+  return `${prefix} ${lacs % 1 === 0 ? lacs.toFixed(0) : lacs.toFixed(1)} Lacs`;
 }
 
 function formatMileage(km: number | null): string {
@@ -48,8 +69,8 @@ function CarCard({ car }: { car: ApprovedCar }) {
   const [isWishlisted, setIsWishlisted] = useState(false);
 
   useEffect(() => {
-    setIsWishlisted(isInWishlist(car.id as any));
-    const handleUpdate = () => setIsWishlisted(isInWishlist(car.id as any));
+    setIsWishlisted(isInWishlistId(car.id));
+    const handleUpdate = () => setIsWishlisted(isInWishlistId(car.id));
     window.addEventListener('wishlist-updated', handleUpdate);
     return () => window.removeEventListener('wishlist-updated', handleUpdate);
   }, [car.id]);
@@ -58,13 +79,13 @@ function CarCard({ car }: { car: ApprovedCar }) {
     e.preventDefault();
     e.stopPropagation();
     if (isWishlisted) {
-      removeFromWishlist(car.id as any);
+      removeFromWishlistId(car.id);
     } else {
-      addToWishlist(car.id as any);
+      addToWishlistId(car.id);
     }
   };
 
-  const images: string[] = Array.isArray(car.images) ? car.images : [];
+  const images: string[] = Array.isArray(car.images) ? (car.images as string[]) : [];
   const primaryImage =
     images[0] ||
     'https://images.unsplash.com/photo-1550355291-bbee04a92027?auto=format&fit=crop&w=600&q=80';
@@ -78,18 +99,17 @@ function CarCard({ car }: { car: ApprovedCar }) {
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-        {car.badge && (
+        {car.is_featured && (
           <span className="absolute top-3 left-3 px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full bg-[#0055FE] text-white">
-            {car.badge}
+            Featured
           </span>
         )}
         <button
           onClick={handleWishlistToggle}
-          className={`absolute top-3 right-3 p-2 rounded-full bg-white/80 backdrop-blur-sm transition-all duration-200 active:scale-90 ${
-            isWishlisted
+          className={`absolute top-3 right-3 p-2 rounded-full bg-white/80 backdrop-blur-sm transition-all duration-200 active:scale-90 ${isWishlisted
               ? 'text-[#0055FE] scale-105'
               : 'text-gray-500 hover:text-[#0055FE] hover:bg-white'
-          }`}
+            }`}
         >
           <Heart
             className={`w-4 h-4 transition-all duration-200 ${isWishlisted ? 'fill-[#0055FE] text-[#0055FE]' : ''}`}
@@ -123,7 +143,7 @@ function CarCard({ car }: { car: ApprovedCar }) {
 
         <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between">
           <span className="text-lg font-bold text-[#0055FE]">
-            {formatPrice(car.price, car.price_display)}
+            {formatPrice(car.price, car.currency)}
           </span>
           <Link href={`/buy-car/${car.id}`} suppressHydrationWarning>
             <Button
@@ -568,11 +588,10 @@ function BuyCarContent() {
                       <Button
                         key={page}
                         variant={page === currentPage ? 'default' : 'outline'}
-                        className={`w-10 h-10 ${
-                          page === currentPage
+                        className={`w-10 h-10 ${page === currentPage
                             ? 'bg-[#0055FE] text-white hover:bg-blue-700 border-none'
                             : 'border-gray-200 text-gray-600 hover:text-gray-900 bg-white hover:bg-gray-50'
-                        }`}
+                          }`}
                         onClick={() => setCurrentPage(page)}
                       >
                         {page}

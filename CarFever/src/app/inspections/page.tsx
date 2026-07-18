@@ -21,7 +21,7 @@ import {
   DollarSign,
   AlertTriangle
 } from "lucide-react";
-import { submitInspectionBooking } from "@/lib/actions";
+import { submitInspectionBooking } from "@/lib/server-actions";
 
 export default function InspectionsPage() {
   const [bookingStarted, setBookingStarted] = useState(false);

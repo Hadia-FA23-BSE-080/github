@@ -20,15 +20,11 @@ import {
   LogOut,
   AlertCircle,
   CheckCircle2,
-  MapPin,
-  Trash2,
   BellOff,
   CheckCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
-import { getAllCars } from "@/lib/car-data";
-import { getWishlist, removeFromWishlist, getWishlistCount } from "@/lib/wishlist";
 
 interface NavLink {
   label: string;
@@ -40,6 +36,7 @@ const navLinks: NavLink[] = [
   { label: "Buy Car", href: "/buy-car" },
   { label: "Sell Car", href: "/sell-car" },
   { label: "Inspections", href: "/inspections" },
+  { label: "Dealers", href: "/dealers" },
   { label: "Blogs", href: "/blog" },
 ];
 
@@ -56,6 +53,15 @@ interface StoredUser {
   password: string;
 }
 
+function getWishlistCount(): number {
+  if (typeof window === "undefined") return 0;
+  try {
+    return JSON.parse(localStorage.getItem("cf_wishlist_ids") || "[]").length;
+  } catch {
+    return 0;
+  }
+}
+
 export function Navbar() {
   const router = useRouter();
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -63,7 +69,6 @@ export function Navbar() {
 
   // Panel & modal states
   const [searchOpen, setSearchOpen] = useState(false);
-  const [wishlistOpen, setWishlistOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [authModal, setAuthModal] = useState<"login" | "signup" | null>(null);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
@@ -80,13 +85,8 @@ export function Navbar() {
   const [authSuccess, setAuthSuccess] = useState(false);
   const [authErrors, setAuthErrors] = useState<{ name?: string; email?: string; password?: string; general?: string }>({});
 
-  // Wishlist state — dynamic from localStorage
-  const buildWishlistCars = () => {
-    const ids = getWishlist();
-    return getAllCars().filter(c => ids.includes(c.id));
-  };
-  const [wishlistCars, setWishlistCars] = useState(buildWishlistCars);
-  const wishlistCount = wishlistCars.length;
+  // Wishlist state
+  const [wishlistCount, setWishlistCount] = useState(0);
 
   // Notifications state
   const [notifications, setNotifications] = useState(DEMO_NOTIFICATIONS);
@@ -99,12 +99,11 @@ export function Navbar() {
       if (stored) setCurrentUser(JSON.parse(stored));
     } catch {}
 
-    // Sync wishlist with localStorage
-    setWishlistCars(buildWishlistCars());
-    const handleWishlistUpdate = () => setWishlistCars(buildWishlistCars());
+    // Sync wishlist count
+    setWishlistCount(getWishlistCount());
+    const handleWishlistUpdate = () => setWishlistCount(getWishlistCount());
     window.addEventListener("wishlist-updated", handleWishlistUpdate);
     return () => window.removeEventListener("wishlist-updated", handleWishlistUpdate);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleAuthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -153,6 +152,15 @@ export function Navbar() {
         localStorage.setItem("cf_users", JSON.stringify(users));
         localStorage.setItem("cf_current_user", JSON.stringify(newUser));
         setCurrentUser(newUser);
+
+        // Sync to Supabase so it appears in Admin Panel via Server Action (bypasses RLS)
+        import("@/lib/server-actions").then(async ({ syncUserToDatabase }) => {
+          await syncUserToDatabase({
+            name: newUser.name,
+            email: newUser.email,
+            role: "buyer",
+          });
+        });
       } catch {}
     } else {
       // Login: find matching account
@@ -198,19 +206,17 @@ export function Navbar() {
 
   const closeAll = () => {
     setSearchOpen(false);
-    setWishlistOpen(false);
     setNotifOpen(false);
     setProfileMenuOpen(false);
   };
 
   const toggleSearch = () => { closeAll(); setSearchOpen(v => !v); };
-  const toggleWishlist = () => { closeAll(); setWishlistOpen(v => !v); };
   const toggleNotif = () => { closeAll(); setNotifOpen(v => !v); };
   const toggleProfile = () => { closeAll(); setProfileMenuOpen(v => !v); };
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50">
+      <header className="fixed top-0 left-0 right-0 z-[60]">
         {/* Main navbar */}
         <nav className="bg-white border-b border-gray-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -276,9 +282,10 @@ export function Navbar() {
                 </button>
 
                 {/* Wishlist button */}
-                <button
-                  onClick={toggleWishlist}
-                  className={`p-2.5 rounded-lg transition-all duration-200 relative ${wishlistOpen ? "text-[#0055FE] bg-blue-50" : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"}`}
+                <Link
+                  href="/wishlist"
+                  onClick={closeAll}
+                  className={`p-2.5 rounded-lg transition-all duration-200 relative text-gray-500 hover:text-gray-900 hover:bg-gray-50`}
                 >
                   <Heart className={`w-4.5 h-4.5 ${wishlistCount > 0 ? "fill-[#0055FE] text-[#0055FE]" : ""}`} />
                   {wishlistCount > 0 && (
@@ -286,7 +293,7 @@ export function Navbar() {
                       {wishlistCount}
                     </span>
                   )}
-                </button>
+                </Link>
 
                 {/* Bell button */}
                 <button
@@ -320,6 +327,14 @@ export function Navbar() {
                           <p className="text-sm font-semibold text-gray-900 truncate">{currentUser.name}</p>
                           <p className="text-xs text-gray-500 truncate mt-0.5">{currentUser.email}</p>
                         </div>
+                        <Link
+                          href="/become-dealer"
+                          onClick={() => setProfileMenuOpen(false)}
+                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-600 hover:text-[#0055FE] hover:bg-blue-50 transition-colors"
+                        >
+                          <Car className="w-4 h-4" />
+                          Become a Dealer
+                        </Link>
                         <button
                           onClick={handleLogout}
                           className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-600 hover:text-[#0055FE] hover:bg-blue-50 transition-colors"
@@ -362,9 +377,10 @@ export function Navbar() {
                 </button>
 
                 {/* Wishlist */}
-                <button
-                  onClick={toggleWishlist}
-                  className={`p-2 rounded-lg transition-all duration-200 relative ${wishlistOpen ? "text-[#0055FE] bg-blue-50" : "text-gray-500 hover:text-gray-900"}`}
+                <Link
+                  href="/wishlist"
+                  onClick={() => setMobileOpen(false)}
+                  className={`p-2 rounded-lg transition-all duration-200 relative text-gray-500 hover:text-gray-900`}
                 >
                   <Heart className={`w-4.5 h-4.5 ${wishlistCount > 0 ? "fill-[#0055FE] text-[#0055FE]" : ""}`} />
                   {wishlistCount > 0 && (
@@ -372,7 +388,7 @@ export function Navbar() {
                       {wishlistCount}
                     </span>
                   )}
-                </button>
+                </Link>
 
                 {/* Notifications */}
                 <button
@@ -508,67 +524,6 @@ export function Navbar() {
         )}
       </header>
 
-      {/* ─── WISHLIST PANEL ─── */}
-      {wishlistOpen && (
-        <div className="fixed right-4 top-20 z-[60] w-80 bg-white border border-gray-200 rounded-2xl shadow-xl animate-in slide-in-from-top-3 fade-in duration-200">
-          <div className="flex items-center justify-between p-4 border-b border-gray-100">
-            <div className="flex items-center gap-2">
-              <Heart className="w-4 h-4 text-[#0055FE] fill-[#0055FE]" />
-              <span className="text-sm font-bold text-gray-900">Saved Cars</span>
-              <span className="text-xs text-gray-500">({wishlistCount})</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Link href="/wishlist" onClick={() => setWishlistOpen(false)} className="text-xs text-[#0055FE] hover:text-blue-700 transition-colors font-medium">
-                View All
-              </Link>
-              <button onClick={() => setWishlistOpen(false)} className="p-1 text-gray-400 hover:text-gray-900 transition-colors">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          {wishlistCars.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
-              <Heart className="w-12 h-12 mx-auto mb-3 opacity-20" />
-              <p className="text-sm font-medium text-gray-700 mb-1">Your wishlist is empty</p>
-              <p className="text-xs text-gray-400 mb-4">Click the heart icon on any car to save it</p>
-              <Link href="/buy-car" onClick={() => setWishlistOpen(false)}>
-                <Button size="sm" className="bg-[#0055FE] hover:bg-blue-700 text-white text-xs">
-                  Browse Cars
-                </Button>
-              </Link>
-            </div>
-          ) : (
-            <div className="p-2 space-y-2 max-h-[340px] overflow-y-auto">
-              {wishlistCars.map((car) => (
-                <div key={car.id} className="flex gap-3 p-2 rounded-xl hover:bg-gray-50 transition-colors group">
-                  <img src={car.image} className="w-20 h-14 rounded-lg object-cover shrink-0 border border-gray-100" alt={car.title} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 truncate">{car.title}</p>
-                    <p className="text-xs text-[#0055FE] font-bold mt-0.5">{car.priceDisplay}</p>
-                    <div className="flex items-center gap-1 mt-1">
-                      <MapPin className="w-3 h-3 text-gray-400" />
-                      <span className="text-xs text-gray-500">{car.location}</span>
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-1 shrink-0">
-                    <Link href={`/buy-car/${car.id}`} onClick={() => setWishlistOpen(false)} className="p-1.5 text-gray-400 hover:text-[#0055FE] transition-colors" title="View Details">
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
-                    <button 
-                      onClick={() => removeFromWishlist(car.id)} 
-                      className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"
-                      title="Remove from wishlist"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
 
       {/* ─── NOTIFICATIONS PANEL ─── */}
       {notifOpen && (
@@ -756,7 +711,7 @@ export function Navbar() {
       )}
 
       {/* Backdrop for panels */}
-      {(wishlistOpen || notifOpen || profileMenuOpen) && (
+      {(notifOpen || profileMenuOpen) && (
         <div className="fixed inset-0 z-[55]" onClick={closeAll} />
       )}
     </>

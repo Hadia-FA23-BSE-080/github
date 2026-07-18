@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowLeft, Save, Upload, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { createBlog, updateBlog, uploadImage } from '@/lib/admin-actions';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 
 export default function EditBlogPage() {
@@ -45,12 +45,14 @@ export default function EditBlogPage() {
   }, [id]);
 
   async function fetchCategories() {
+    const supabase = createClient();
     const { data } = await supabase.from('categories').select('*');
     if (data) setCategories(data);
   }
 
   async function fetchBlog() {
     try {
+      const supabase = createClient();
       const { data, error } = await supabase.from('blogs').select('*').eq('id', id).single();
       if (error) throw error;
       if (data) {

@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowLeft, Save, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { createCar, updateCar, uploadImage } from '@/lib/admin-actions';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 
 export default function EditCarPage() {
@@ -25,7 +25,7 @@ export default function EditCarPage() {
   
   const [formData, setFormData] = useState({
     title: '',
-    brand: '',
+    make: '',
     model: '',
     year: new Date().getFullYear(),
     price: '',
@@ -38,7 +38,9 @@ export default function EditCarPage() {
     engine: '',
     horsepower: '',
     description: '',
-    status: 'pending'
+    status: 'pending',
+    city: '',
+    currency: 'PKR',
   });
 
   useEffect(() => {
@@ -49,27 +51,30 @@ export default function EditCarPage() {
 
   async function fetchCar() {
     try {
+      const supabase = createClient();
       const { data, error } = await supabase.from('cars').select('*').eq('id', id).single();
       if (error) throw error;
       if (data) {
         setFormData({
           title: data.title || '',
-          brand: data.brand || '',
+          make: (data as any).make || '',
           model: data.model || '',
           year: data.year || new Date().getFullYear(),
           price: data.price?.toString() || '',
           mileage: data.mileage?.toString() || '',
           transmission: data.transmission || 'Automatic',
           fuel_type: data.fuel_type || 'Petrol',
-          body_type: data.body_type || 'Sedan',
-          exterior_color: data.exterior_color || '',
-          interior_color: data.interior_color || '',
-          engine: data.engine || '',
-          horsepower: data.horsepower?.toString() || '',
+          body_type: (data as any).body_type || 'Sedan',
+          exterior_color: (data as any).exterior_color || '',
+          interior_color: (data as any).interior_color || '',
+          engine: (data as any).engine || '',
+          horsepower: (data as any).horsepower?.toString() || '',
           description: data.description || '',
-          status: data.status || 'pending'
+          status: data.status || 'pending',
+          city: data.city || '',
+          currency: data.currency || 'PKR',
         });
-        setImages(data.images || []);
+        setImages((data.images as string[]) || []);
       }
     } catch (error) {
       toast.error('Failed to fetch car details');
@@ -94,7 +99,6 @@ export default function EditCarPage() {
 
     setUploading(true);
     try {
-      // In a real app we'd upload all files in parallel
       for (let i = 0; i < files.length; i++) {
         const url = await uploadImage(files[i]);
         setImages(prev => [...prev, url]);
@@ -116,13 +120,30 @@ export default function EditCarPage() {
     setLoading(true);
     
     try {
+      const computedTitle = formData.title || `${formData.year} ${formData.make} ${formData.model}`;
+      const slug = computedTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now().toString().slice(-6);
+
       const dataToSave = {
-        ...formData,
+        title: computedTitle,
+        slug,
+        make: formData.make,
+        model: formData.model,
+        year: parseInt(String(formData.year)) || new Date().getFullYear(),
         price: parseFloat(formData.price) || 0,
-        mileage: parseInt(formData.mileage) || 0,
-        year: parseInt(formData.year as any) || new Date().getFullYear(),
-        horsepower: parseInt(formData.horsepower) || null,
-        images
+        currency: formData.currency || 'PKR',
+        mileage: parseInt(formData.mileage) || null,
+        transmission: formData.transmission,
+        fuel_type: formData.fuel_type,
+        body_type: formData.body_type,
+        exterior_color: formData.exterior_color || null,
+        interior_color: formData.interior_color || null,
+        engine: formData.engine || null,
+        horsepower: formData.horsepower ? parseInt(formData.horsepower) : null,
+        description: formData.description || null,
+        status: formData.status as 'pending' | 'approved' | 'rejected' | 'draft',
+        city: formData.city || null,
+        images,
+        features: [],
       };
 
       if (id) {
@@ -143,6 +164,7 @@ export default function EditCarPage() {
   if (fetching) {
     return <div className="text-white text-center py-20">Loading car details...</div>;
   }
+
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -183,8 +205,8 @@ export default function EditCarPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="brand" className="text-zinc-300">Brand <span className="text-red-500">*</span></Label>
-              <Input id="brand" name="brand" required value={formData.brand} onChange={handleChange} className="bg-zinc-950 border-zinc-800" placeholder="e.g. Porsche" />
+              <Label htmlFor="make" className="text-zinc-300">Make <span className="text-red-500">*</span></Label>
+              <Input id="make" name="make" required value={formData.make} onChange={handleChange} className="bg-zinc-950 border-zinc-800" placeholder="e.g. Porsche" />
             </div>
 
             <div className="space-y-2">

@@ -1,3 +1,11 @@
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[];
+
 export type CarStatus = 'pending' | 'approved' | 'rejected' | 'draft';
 export type InquiryStatus = 'pending' | 'read' | 'replied' | 'archived';
 export type InspectionStatus = 'pending' | 'scheduled' | 'completed' | 'cancelled';
@@ -5,7 +13,9 @@ export type InspectionPlan = 'basic' | 'standard' | 'premium';
 export type UserRole = 'buyer' | 'seller' | 'admin' | 'content_manager' | 'inspection_manager';
 export type UserStatus = 'active' | 'suspended' | 'pending';
 export type BlogStatus = 'draft' | 'published' | 'scheduled';
+export type DealerStatus = 'pending' | 'approved' | 'suspended';
 
+/** Matches live `users` table */
 export type DbUser = {
   id: string;
   auth_user_id: string | null;
@@ -22,43 +32,61 @@ export type DbUser = {
   last_login: string | null;
 };
 
+export type DbDealer = {
+  id: string;
+  user_id: string | null;
+  company_name: string;
+  logo_url: string | null;
+  license_number: string | null;
+  address: string | null;
+  city: string | null;
+  phone: string | null;
+  email: string | null;
+  website: string | null;
+  description: string | null;
+  business_hours: Json | null;
+  is_verified: boolean;
+  status: DealerStatus;
+  rating_avg: number;
+  total_reviews: number;
+  created_at: string;
+  updated_at: string;
+};
+
+/** Matches live `cars` table — 'brand' column was renamed to 'make' in migration 004 */
 export type DbCar = {
   id: string;
+  seller_id: string | null;
+  dealer_id: string | null;
   title: string;
-  brand: string;
+  slug: string | null;
+  make: string;          // was 'brand' in original schema; renamed in migration 004
   model: string;
   year: number;
-  price: number;
-  price_display: string | null;
   mileage: number | null;
-  transmission: string | null;
+  price: number;
+  currency: string | null;
+  condition: string | null;
   fuel_type: string | null;
-  body_type: string | null;
-  exterior_color: string | null;
+  transmission: string | null;
+  color: string | null;           // general color field
+  exterior_color: string | null;  // more specific; may be same as color
   interior_color: string | null;
+  body_type: string | null;
   engine: string | null;
   horsepower: number | null;
-  condition: string | null;
   city: string | null;
-  location: string | null;
   description: string | null;
-  images: string[];
-  features: string[];
-  badge: string | null;
-  rating: number | null;
+  features: Json;
+  images: Json;
   status: CarStatus;
   is_featured: boolean;
   views_count: number;
-  slug: string | null;
-  meta_title: string | null;
-  meta_description: string | null;
-  seller_id: string | null;
   seller_name: string | null;
   seller_email: string | null;
   seller_phone: string | null;
   created_at: string;
   updated_at: string;
-  published_at: string | null;
 };
 
 export type DbInquiry = {
@@ -72,7 +100,6 @@ export type DbInquiry = {
   status: InquiryStatus;
   is_read: boolean;
   created_at: string;
-  updated_at: string;
 };
 
 export type DbInspection = {
@@ -90,23 +117,13 @@ export type DbInspection = {
   customer_phone: string;
   customer_email: string | null;
   status: InspectionStatus;
-  car_id: string | null;
-  user_id: string | null;
-  inspector_id: string | null;
-  report_url: string | null;
-  notes: string | null;
   created_at: string;
-  updated_at: string;
 };
 
 export type DbCategory = {
   id: string;
   name: string;
   slug: string;
-  description: string | null;
-  parent_id: string | null;
-  created_at: string;
-  updated_at: string;
 };
 
 export type DbBlog = {
@@ -118,77 +135,223 @@ export type DbBlog = {
   featured_image: string | null;
   author_id: string | null;
   category_id: string | null;
-  tags: any;
   status: BlogStatus;
   published_at: string | null;
-  meta_title: string | null;
-  meta_description: string | null;
-  focus_keyword: string | null;
-  views_count: number;
-  allow_comments: boolean;
-  is_featured: boolean;
   created_at: string;
-  updated_at: string;
 };
 
 export type DbSEOSetting = {
   id: string;
-  page_path: string;
+  page_path: string | null;
   meta_title: string | null;
   meta_description: string | null;
-  og_image: string | null;
   canonical_url: string | null;
-  schema_markup: any;
+  og_image: string | null;
+  schema_markup: Json | null;
+  created_at?: string;
   updated_at: string;
 };
 
-export type Database = {
+/** Matches live `site_settings` table — key/value store */
+export type DbSiteSetting = {
+  id: string;
+  key: string;
+  value: Json;
+  updated_at: string;
+};
+
+export interface Database {
   public: {
     Tables: {
-      users: {
-        Row: DbUser;
-        Insert: Partial<DbUser> & Pick<DbUser, 'name' | 'email'>;
-        Update: Partial<DbUser>;
-        Relationships: [];
-      };
       cars: {
         Row: DbCar;
-        Insert: Partial<DbCar> & Pick<DbCar, 'title' | 'brand' | 'model' | 'year'>;
-        Update: Partial<DbCar>;
+        Insert: {
+          id?: string;
+          seller_id?: string | null;
+          dealer_id?: string | null;
+          title: string;
+          slug?: string | null;
+          make: string;
+          model: string;
+          year: number;
+          mileage?: number | null;
+          price: number;
+          currency?: string | null;
+          condition?: string | null;
+          fuel_type?: string | null;
+          transmission?: string | null;
+          color?: string | null;
+          exterior_color?: string | null;
+          interior_color?: string | null;
+          body_type?: string | null;
+          engine?: string | null;
+          horsepower?: number | null;
+          city?: string | null;
+          description?: string | null;
+          features?: Json;
+          images?: Json;
+          status?: CarStatus;
+          is_featured?: boolean;
+          views_count?: number;
+          seller_name?: string | null;
+          seller_email?: string | null;
+          seller_phone?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['cars']['Insert']>;
         Relationships: [];
       };
       inquiries: {
         Row: DbInquiry;
-        Insert: Partial<DbInquiry> & Pick<DbInquiry, 'name' | 'email' | 'subject' | 'message'>;
-        Update: Partial<DbInquiry>;
+        Insert: {
+          id?: string;
+          name: string;
+          email: string;
+          phone?: string | null;
+          subject: string;
+          message: string;
+          car_id?: string | null;
+          status?: InquiryStatus;
+          is_read?: boolean;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['inquiries']['Insert']>;
         Relationships: [];
       };
       inspections: {
         Row: DbInspection;
-        Insert: Partial<DbInspection> & Pick<DbInspection, 'make' | 'model' | 'year' | 'registration_number' | 'address' | 'scheduled_date' | 'time_slot' | 'customer_name' | 'customer_phone'>;
-        Update: Partial<DbInspection>;
-        Relationships: [];
-      };
-      categories: {
-        Row: DbCategory;
-        Insert: Partial<DbCategory> & Pick<DbCategory, 'name' | 'slug'>;
-        Update: Partial<DbCategory>;
+        Insert: {
+          id?: string;
+          make: string;
+          model: string;
+          year: number;
+          registration_number: string;
+          address: string;
+          plan?: InspectionPlan;
+          plan_price?: number;
+          scheduled_date: string;
+          time_slot: string;
+          customer_name: string;
+          customer_phone: string;
+          customer_email?: string | null;
+          status?: InspectionStatus;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['inspections']['Insert']>;
         Relationships: [];
       };
       blogs: {
         Row: DbBlog;
-        Insert: Partial<DbBlog> & Pick<DbBlog, 'title' | 'slug'>;
-        Update: Partial<DbBlog>;
+        Insert: {
+          id?: string;
+          title: string;
+          slug: string;
+          excerpt?: string | null;
+          content?: string | null;
+          featured_image?: string | null;
+          author_id?: string | null;
+          category_id?: string | null;
+          status?: BlogStatus;
+          published_at?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['blogs']['Insert']>;
+        Relationships: [];
+      };
+      categories: {
+        Row: DbCategory;
+        Insert: {
+          id?: string;
+          name: string;
+          slug: string;
+        };
+        Update: Partial<Database['public']['Tables']['categories']['Insert']>;
+        Relationships: [];
+      };
+      users: {
+        Row: DbUser;
+        Insert: {
+          id?: string;
+          auth_user_id?: string | null;
+          name: string;
+          email: string;
+          phone?: string | null;
+          role?: UserRole;
+          status?: UserStatus;
+          avatar_url?: string | null;
+          bio?: string | null;
+          listings_count?: number;
+          created_at?: string;
+          updated_at?: string;
+          last_login?: string | null;
+        };
+        Update: Partial<Database['public']['Tables']['users']['Insert']>;
+        Relationships: [];
+      };
+      dealers: {
+        Row: DbDealer;
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          company_name: string;
+          logo_url?: string | null;
+          license_number?: string | null;
+          address?: string | null;
+          city?: string | null;
+          phone?: string | null;
+          email?: string | null;
+          website?: string | null;
+          description?: string | null;
+          business_hours?: Json | null;
+          is_verified?: boolean;
+          status?: DealerStatus;
+          rating_avg?: number;
+          total_reviews?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['dealers']['Insert']>;
         Relationships: [];
       };
       seo_settings: {
         Row: DbSEOSetting;
-        Insert: Partial<DbSEOSetting> & Pick<DbSEOSetting, 'page_path'>;
-        Update: Partial<DbSEOSetting>;
+        Insert: {
+          id?: string;
+          page_path?: string | null;
+          meta_title?: string | null;
+          meta_description?: string | null;
+          canonical_url?: string | null;
+          og_image?: string | null;
+          schema_markup?: Json | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['seo_settings']['Insert']>;
+        Relationships: [];
+      };
+      site_settings: {
+        Row: DbSiteSetting;
+        Insert: {
+          id?: string;
+          key: string;
+          value: Json;
+          updated_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['site_settings']['Insert']>;
         Relationships: [];
       };
     };
-    Views: {};
-    Functions: {};
+    Views: Record<string, never>;
+    Functions: {
+      increment_car_views: {
+        Args: {
+          car_id: string;
+        };
+        Returns: void;
+      };
+    };
+    Enums: Record<string, never>;
+    CompositeTypes: Record<string, never>;
   };
-};
+}

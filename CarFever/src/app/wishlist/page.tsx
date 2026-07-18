@@ -5,25 +5,84 @@ import Link from "next/link";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
-import { Heart, Gauge, Calendar, Fuel, MapPin, X, Car } from "lucide-react";
-import { getAllCars, CarListing } from "@/lib/car-data";
-import { getWishlist, removeFromWishlist } from "@/lib/wishlist";
+import { Heart, Gauge, Calendar, Fuel, MapPin, X, Car, Loader2 } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import type { ApprovedCar } from "@/lib/server-actions";
+
+// ── Wishlist helpers (localStorage, using Supabase UUID strings) ──────────────
+
+function getWishlistIds(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    return JSON.parse(localStorage.getItem("cf_wishlist_ids") || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function removeFromWishlist(carId: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    const ids = getWishlistIds().filter((id) => id !== carId);
+    localStorage.setItem("cf_wishlist_ids", JSON.stringify(ids));
+    window.dispatchEvent(new CustomEvent("wishlist-updated"));
+  } catch {
+    console.error("Error removing from wishlist");
+  }
+}
+
+function formatPrice(price: number): string {
+  return `PKR ${(price / 100000).toFixed(1)} Lacs`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 export default function WishlistPage() {
-  const [wishlistCars, setWishlistCars] = useState<CarListing[]>([]);
+  const [wishlistCars, setWishlistCars] = useState<ApprovedCar[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const refresh = () => {
-    const ids = getWishlist();
-    setWishlistCars(getAllCars().filter((c) => ids.includes(c.id)));
+  const loadWishlist = async () => {
+    setLoading(true);
+    const ids = getWishlistIds();
+
+    if (ids.length === 0) {
+      setWishlistCars([]);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("cars")
+        .select(
+          "id, title, make, model, year, price, currency, mileage, fuel_type, transmission, color, city, images, description, features, slug, condition, is_featured, created_at"
+        )
+        .in("id", ids)
+        .eq("status", "approved");
+
+      if (error) {
+        console.error("Error fetching wishlist cars:", error);
+        setWishlistCars([]);
+      } else {
+        setWishlistCars((data ?? []) as ApprovedCar[]);
+      }
+    } catch (err) {
+      console.error("Wishlist fetch failed:", err);
+      setWishlistCars([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    refresh();
-    window.addEventListener("wishlist-updated", refresh);
-    return () => window.removeEventListener("wishlist-updated", refresh);
+    loadWishlist();
+    const handleUpdate = () => loadWishlist();
+    window.addEventListener("wishlist-updated", handleUpdate);
+    return () => window.removeEventListener("wishlist-updated", handleUpdate);
   }, []);
 
-  const handleRemove = (carId: number) => {
+  const handleRemove = (carId: string) => {
     removeFromWishlist(carId);
   };
 
@@ -61,71 +120,85 @@ export default function WishlistPage() {
             </div>
           </div>
 
-          {/* Grid */}
-          {wishlistCars.length > 0 ? (
+          {/* Loading state */}
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-8 h-8 animate-spin text-[#0055FE]" />
+            </div>
+          ) : wishlistCars.length > 0 ? (
+            /* Grid */
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {wishlistCars.map((car) => (
-                <div
-                  key={car.id}
-                  className="group relative rounded-xl overflow-hidden bg-white border border-gray-200 transition-all duration-300 hover:shadow-md hover:-translate-y-1 flex flex-col"
-                >
-                  {/* Remove Button */}
-                  <button
-                    onClick={() => handleRemove(car.id)}
-                    className="absolute top-3 right-3 z-10 p-2 rounded-full bg-white/90 text-gray-500 hover:text-red-500 hover:bg-red-50 border border-gray-200 transition-all duration-200 active:scale-90 shadow-sm"
-                    title="Remove from wishlist"
+              {wishlistCars.map((car) => {
+                const images = Array.isArray(car.images) ? (car.images as string[]) : [];
+                const primaryImage =
+                  images[0] ||
+                  "https://images.unsplash.com/photo-1550355291-bbee04a92027?auto=format&fit=crop&w=600&q=80";
+
+                return (
+                  <div
+                    key={car.id}
+                    className="group relative rounded-xl overflow-hidden bg-white border border-gray-200 transition-all duration-300 hover:shadow-md hover:-translate-y-1 flex flex-col"
                   >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
+                    {/* Remove Button */}
+                    <button
+                      onClick={() => handleRemove(car.id)}
+                      className="absolute top-3 right-3 z-10 p-2 rounded-full bg-white/90 text-gray-500 hover:text-red-500 hover:bg-red-50 border border-gray-200 transition-all duration-200 active:scale-90 shadow-sm"
+                      title="Remove from wishlist"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
 
-                  {/* Image */}
-                  <div className="relative aspect-[16/11] overflow-hidden shrink-0">
-                    <img
-                      src={car.image}
-                      alt={car.title}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-                    <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-md">
-                      <span className="text-sm font-bold text-[#0055FE]">{car.priceDisplay}</span>
+                    {/* Image */}
+                    <div className="relative aspect-[16/11] overflow-hidden shrink-0">
+                      <img
+                        src={primaryImage}
+                        alt={car.title}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+                      <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-md">
+                        <span className="text-sm font-bold text-[#0055FE]">{formatPrice(car.price)}</span>
+                      </div>
+                    </div>
+
+                    {/* Info */}
+                    <div className="p-4 flex flex-col flex-1">
+                      <h3 className="text-sm font-semibold text-gray-900 group-hover:text-[#0055FE] transition-colors mb-3 line-clamp-1">
+                        {car.title}
+                      </h3>
+
+                      <div className="grid grid-cols-2 gap-2 mb-4 text-gray-500">
+                        <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-100 rounded-lg px-2 py-1.5">
+                          <Calendar className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                          <span className="text-xs text-gray-700">{car.year}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-100 rounded-lg px-2 py-1.5">
+                          <Gauge className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                          <span className="text-xs text-gray-700 truncate">
+                            {car.mileage ? `${car.mileage.toLocaleString()} km` : "N/A"}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-100 rounded-lg px-2 py-1.5">
+                          <Fuel className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                          <span className="text-xs text-gray-700">{car.fuel_type || "Petrol"}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-100 rounded-lg px-2 py-1.5">
+                          <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                          <span className="text-xs text-gray-700 truncate">{car.city || "—"}</span>
+                        </div>
+                      </div>
+
+                      <div className="mt-auto">
+                        <Link href={`/buy-car/${car.id}`}>
+                          <Button size="sm" className="w-full border border-[#0055FE] text-[#0055FE] hover:bg-blue-50 bg-white text-xs font-bold">
+                            View Details
+                          </Button>
+                        </Link>
+                      </div>
                     </div>
                   </div>
-
-                  {/* Info */}
-                  <div className="p-4 flex flex-col flex-1">
-                    <h3 className="text-sm font-semibold text-gray-900 group-hover:text-[#0055FE] transition-colors mb-3 line-clamp-1">
-                      {car.title}
-                    </h3>
-
-                    <div className="grid grid-cols-2 gap-2 mb-4 text-gray-500">
-                      <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-100 rounded-lg px-2 py-1.5">
-                        <Calendar className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                        <span className="text-xs text-gray-700">{car.year}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-100 rounded-lg px-2 py-1.5">
-                        <Gauge className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                        <span className="text-xs text-gray-700 truncate">{car.mileage}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-100 rounded-lg px-2 py-1.5">
-                        <Fuel className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                        <span className="text-xs text-gray-700">{car.fuel}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-100 rounded-lg px-2 py-1.5">
-                        <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                        <span className="text-xs text-gray-700 truncate">{car.location.split(",")[0]}</span>
-                      </div>
-                    </div>
-
-                    <div className="mt-auto">
-                      <Link href={`/buy-car/${car.id}`}>
-                        <Button size="sm" className="w-full border border-[#0055FE] text-[#0055FE] hover:bg-blue-50 bg-white text-xs font-bold">
-                          View Details
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             /* Empty state */
