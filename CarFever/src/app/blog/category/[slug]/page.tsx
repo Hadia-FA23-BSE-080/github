@@ -49,9 +49,9 @@ export async function generateStaticParams() {
     .select('slug');
   
   // Add fallback category slugs
-  const fallbackSlugs = fallbackCategories.map(cat => ({ slug: cat.slug }));
+  const fallbackSlugs = fallbackCategories.map(cat => ({ slug: String(cat.slug) }));
   
-  return [...(categories || []).map((cat) => ({ slug: cat.slug })), ...fallbackSlugs];
+  return [...(categories || []).map((cat) => ({ slug: String(cat.slug) })), ...fallbackSlugs];
 }
 
 async function getCategoryData(slug: string) {

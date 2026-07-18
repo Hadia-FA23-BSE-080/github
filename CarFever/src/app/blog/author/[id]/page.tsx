@@ -73,13 +73,13 @@ export async function generateStaticParams() {
     .select('author_id')
     .eq('status', 'published');
   
-  // Get unique author IDs
-  const uniqueAuthorIds = [...new Set((posts || []).map(post => post.author_id))];
+  // Get unique author IDs (filter out nulls and ensure strings)
+  const uniqueAuthorIds = [...new Set((posts || []).map(post => post.author_id).filter(Boolean))];
   
   // Add fallback author IDs
-  const fallbackIds = fallbackAuthors.map(a => ({ id: a.id }));
+  const fallbackIds = fallbackAuthors.map(a => ({ id: String(a.id) }));
   
-  return [...uniqueAuthorIds.map(id => ({ id })), ...fallbackIds];
+  return [...uniqueAuthorIds.map(id => ({ id: String(id) })), ...fallbackIds];
 }
 
 async function getAuthorData(id: string) {

@@ -89,11 +89,11 @@ export async function generateStaticParams() {
     .eq('status', 'published');
   
   const staticSlugs = (posts || []).map((post) => ({
-    slug: post.slug,
+    slug: String(post.slug),
   }));
   
   // Add our fallback slugs
-  const fallbackSlugs = fallbackPosts.map(post => ({ slug: post.slug }));
+  const fallbackSlugs = fallbackPosts.map(post => ({ slug: String(post.slug) }));
   
   return [...staticSlugs, ...fallbackSlugs];
 }

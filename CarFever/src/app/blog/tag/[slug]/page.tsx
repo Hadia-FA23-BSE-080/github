@@ -63,8 +63,8 @@ export async function generateStaticParams() {
     }
   });
   
-  // Combine and return
-  return Array.from([...allTags, ...fallbackTags]).map(tag => ({ slug: tag }));
+  // Combine and return (filter out nulls and convert to string)
+  return Array.from([...allTags, ...fallbackTags]).filter(Boolean).map(tag => ({ slug: String(tag) }));
 }
 
 async function getTagData(slug: string) {
