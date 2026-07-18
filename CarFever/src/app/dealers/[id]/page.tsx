@@ -3,11 +3,10 @@ import { notFound } from "next/navigation";
 import { MapPin, Phone, Mail, Globe, Star, CheckCircle2, Clock, Building2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { mapDbCarToHomeCard } from "@/lib/home-cars";
-import { FeaturedCarsClient } from "@/components/featured-cars-client"; // Assuming this exists or we can just render the grid
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 
-// Let's create a custom grid for cars here to avoid dependency issues
+// Custom car grid for dealer inventory
 import Link from "next/link";
 import { ChevronRight, Calendar, Gauge, Fuel } from "lucide-react";
 
