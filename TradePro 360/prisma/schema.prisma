@@ -1,0 +1,223 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum TradeType {
+  PLUMBER
+  ELECTRICIAN
+  CLEANER
+}
+
+enum JobStatus {
+  PENDING
+  QUOTED
+  BOOKED
+  DISPATCHED
+  EN_ROUTE
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAY_LATER
+  PAID
+  REFUNDED
+}
+
+model Business {
+  id           String    @id @default(cuid())
+  name         String
+  slug         String    @unique
+  tradeType    TradeType
+  logoUrl      String?
+  primaryColor String    @default("#2563eb")
+  phone        String
+  email        String
+  address      String
+  city         String
+  postcode     String
+  lat          Float
+  lng          Float
+  hourlyRate   Float     @default(45)
+  calloutFee   Float     @default(25)
+  stripeAccountId String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  engineers Engineer[]
+  jobs      Job[]
+  customers Customer[]
+}
+
+model Engineer {
+  id          String   @id @default(cuid())
+  businessId  String
+  name        String
+  phone       String
+  email       String
+  skills      String   // JSON array of trade skills
+  lat         Float
+  lng         Float
+  isAvailable Boolean  @default(true)
+  rating      Float    @default(5.0)
+  avatarUrl   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  jobs     Job[]
+
+  @@index([businessId])
+  @@index([isAvailable])
+}
+
+model Customer {
+  id         String   @id @default(cuid())
+  businessId String
+  name       String
+  email      String
+  phone      String
+  address    String?
+  city       String?
+  postcode   String?
+  lat        Float?
+  lng        Float?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  jobs     Job[]
+  messages Message[]
+  reviews  Review[]
+
+  @@index([businessId])
+  @@index([email])
+}
+
+model Job {
+  id               String        @id @default(cuid())
+  reference        String        @unique
+  businessId       String
+  customerId       String
+  engineerId       String?
+  title            String
+  description      String        @db.Text
+  tradeType        TradeType
+  status           JobStatus     @default(PENDING)
+  address          String
+  city             String
+  postcode         String
+  lat              Float
+  lng              Float
+  scheduledAt      DateTime?
+  estimatedArrival DateTime?
+  startedAt        DateTime?
+  completedAt      DateTime?
+  labourHours      Float         @default(1)
+  partsCost        Float         @default(0)
+  labourCost       Float         @default(0)
+  calloutFee       Float         @default(0)
+  vatRate          Float         @default(0.20)
+  totalCost        Float         @default(0)
+  paymentStatus    PaymentStatus @default(UNPAID)
+  stripePaymentId  String?
+  invoiceNumber    String?
+  source           String        @default("web") // web, gmb, portal
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  business   Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer   Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  engineer   Engineer?     @relation(fields: [engineerId], references: [id])
+  photos     Photo[]
+  messages   Message[]
+  reviews    Review[]
+  tracking   TrackingPoint[]
+  quoteItems QuoteItem[]
+
+  @@index([businessId])
+  @@index([customerId])
+  @@index([engineerId])
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
+}
+
+model QuoteItem {
+  id          String  @id @default(cuid())
+  jobId       String
+  name        String
+  description String?
+  quantity    Float   @default(1)
+  unitPrice   Float
+  totalPrice  Float
+
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+}
+
+model Photo {
+  id         String   @id @default(cuid())
+  jobId      String
+  url        String
+  caption    String?
+  uploadedBy String   // customer or engineer
+  createdAt  DateTime @default(now())
+
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  jobId      String
+  customerId String?
+  senderName String
+  senderRole String   // customer, engineer, admin
+  content    String   @db.Text
+  createdAt  DateTime @default(now())
+
+  job      Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  customer Customer? @relation(fields: [customerId], references: [id])
+
+  @@index([jobId])
+  @@index([createdAt])
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  jobId      String   @unique
+  customerId String
+  rating     Int
+  comment    String?  @db.Text
+  createdAt  DateTime @default(now())
+
+  job      Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@index([customerId])
+}
+
+model TrackingPoint {
+  id        String   @id @default(cuid())
+  jobId     String
+  lat       Float
+  lng       Float
+  heading   Float?
+  speed     Float?
+  createdAt DateTime @default(now())
+
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+  @@index([createdAt(sort: Desc)])
+}
