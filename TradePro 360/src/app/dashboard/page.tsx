@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import Link from "next/link";
 import {
   Wrench,
@@ -58,7 +58,7 @@ function DashboardContent() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     const bizRes = await fetch(`/api/business?slug=${businessSlug}`);
     const biz = await bizRes.json();
@@ -72,11 +72,11 @@ function DashboardContent() {
     setJobs(await jobsRes.json());
     setStats(await statsRes.json());
     setLoading(false);
-  };
+  }, [businessSlug]);
 
   useEffect(() => {
     loadData();
-  }, [businessSlug]);
+  }, [loadData]);
 
   const primaryColor = business?.primaryColor ?? "#2563eb";
 

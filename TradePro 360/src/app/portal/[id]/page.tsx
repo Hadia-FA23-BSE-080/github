@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useSearchParams } from "next/navigation";
-import { useState, useEffect, Suspense, useRef } from "react";
+import { useState, useEffect, Suspense, useRef, useCallback } from "react";
 import Link from "next/link";
 import {
   MessageSquare,
@@ -55,15 +55,15 @@ function PortalContent() {
   const [paying, setPaying] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const loadJob = async () => {
+  const loadJob = useCallback(async () => {
     const res = await fetch(`/api/jobs/${jobId}`);
     if (res.ok) setJob(await res.json());
     setLoading(false);
-  };
+  }, [jobId]);
 
   useEffect(() => {
     loadJob();
-  }, [jobId]);
+  }, [loadJob]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
