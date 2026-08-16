@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Winston Log Engine - Control Dashboard</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-dark: #0f111a;
+      --panel-bg: rgba(22, 28, 45, 0.45);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      
+      /* Log Level Colors */
+      --color-info: #10b981;
+      --color-warn: #f59e0b;
+      --color-error: #ef4444;
+      --color-http: #ec4899;
+      --color-debug: #06b6d4;
+      --color-accent: #6366f1;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(at 10% 20%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+        radial-gradient(at 90% 80%, rgba(6, 182, 212, 0.12) 0px, transparent 50%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    header {
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      background-color: rgba(15, 17, 26, 0.7);
+      border-bottom: 1px solid var(--border-color);
+      padding: 1.25rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .logo-icon {
+      width: 2.25rem;
+      height: 2.25rem;
+      background: linear-gradient(135deg, var(--color-accent), var(--color-debug));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: #fff;
+      font-size: 1.2rem;
+      box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+    }
+
+    .logo-text h1 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      background: linear-gradient(to right, #fff, #9ca3af);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .logo-text p {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      color: var(--color-info);
+      padding: 0.4rem 0.8rem;
+      border-radius: 50px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background-color: var(--color-info);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--color-info);
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    main {
+      flex: 1;
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2rem;
+      display: grid;
+      grid-template-columns: 1fr 1.3fr;
+      gap: 2rem;
+    }
+
+    @media (max-width: 1024px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--panel-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      transition: transform 0.3s ease, border-color 0.3s ease;
+    }
+
+    .card:hover {
+      border-color: rgba(99, 102, 241, 0.25);
+    }
+
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #fff;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding-bottom: 0.75rem;
+    }
+
+    .card-title svg {
+      width: 1.25rem;
+      height: 1.25rem;
+      color: var(--color-accent);
+    }
+
+    /* Form Styles */
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      background: rgba(15, 17, 26, 0.5);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      color: #fff;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--color-accent);
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.15);
+    }
+
+    .btn-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .btn {
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 0.85rem;
+      padding: 0.65rem 1rem;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      outline: none;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      text-align: center;
+    }
+
+    .btn-info { background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.2); color: var(--color-info); }
+    .btn-info:hover { background: var(--color-info); color: #fff; box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
+
+    .btn-warn { background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.2); color: var(--color-warn); }
+    .btn-warn:hover { background: var(--color-warn); color: #fff; box-shadow: 0 0 15px rgba(245, 158, 11, 0.4); }
+
+    .btn-error { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); color: var(--color-error); }
+    .btn-error:hover { background: var(--color-error); color: #fff; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
+
+    .btn-http { background: rgba(236, 72, 153, 0.1); border-color: rgba(236, 72, 153, 0.2); color: var(--color-http); }
+    .btn-http:hover { background: var(--color-http); color: #fff; box-shadow: 0 0 15px rgba(236, 72, 153, 0.4); }
+
+    .btn-debug { background: rgba(6, 182, 212, 0.1); border-color: rgba(6, 182, 212, 0.2); color: var(--color-debug); }
+    .btn-debug:hover { background: var(--color-debug); color: #fff; box-shadow: 0 0 15px rgba(6, 182, 212, 0.4); }
+
+    /* Error Simulator Section */
+    .error-simulator-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    @media (max-width: 640px) {
+      .error-simulator-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .error-btn-card {
+      background: rgba(15, 17, 26, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      padding: 1rem;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 0.75rem;
+      transition: all 0.2s ease;
+    }
+
+    .error-btn-card:hover {
+      background: rgba(15, 17, 26, 0.5);
+      border-color: rgba(239, 68, 68, 0.15);
+    }
+
+    .error-info-text {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .btn-trigger {
+      width: 100%;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      color: #f87171;
+    }
+
+    .btn-trigger:hover {
+      background: var(--color-error);
+      color: #fff;
+      box-shadow: 0 0 15px rgba(239, 68, 68, 0.35);
+    }
+
+    /* Logger Terminal Section */
+    .terminal-container {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 12rem);
+      min-height: 550px;
+    }
+
+    .terminal-header {
+      background: rgba(15, 17, 26, 0.8);
+      border: 1px solid var(--border-color);
+      border-bottom: none;
+      border-top-left-radius: 12px;
+      border-top-right-radius: 12px;
+      padding: 0.75rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .tab-bar {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 0.4rem 0.8rem;
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 0.8rem;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .tab-btn.active {
+      color: var(--color-accent);
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+    }
+
+    .terminal-controls {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .refresh-toggle-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      cursor: pointer;
+    }
+
+    .btn-icon {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      color: #fff;
+      padding: 0.4rem;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .btn-icon:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .terminal-body {
+      flex: 1;
+      background: #06080e;
+      border: 1px solid var(--border-color);
+      border-bottom-left-radius: 12px;
+      border-bottom-right-radius: 12px;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.8rem;
+      overflow-y: auto;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      box-shadow: inset 0 4px 20px rgba(0, 0, 0, 0.6);
+    }
+
+    /* Terminal Log Row Styles */
+    .log-row {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+      padding: 0.4rem 0.5rem;
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      transition: background 0.15s ease;
+    }
+
+    .log-row:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .log-meta-container {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .log-timestamp {
+      color: #565e75;
+      font-size: 0.75rem;
+      white-space: nowrap;
+      margin-top: 0.1rem;
+    }
+
+    .log-badge {
+      font-size: 0.7rem;
+      font-weight: bold;
+      text-transform: uppercase;
+      padding: 0.1rem 0.4rem;
+      border-radius: 3px;
+      white-space: nowrap;
+      min-width: 50px;
+      text-align: center;
+      display: inline-block;
+    }
+
+    .badge-info { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-warn { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge-error { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .badge-http { background: rgba(236, 72, 153, 0.15); color: #f472b6; border: 1px solid rgba(236, 72, 153, 0.3); }
+    .badge-debug { background: rgba(6, 182, 212, 0.15); color: #22d3ee; border: 1px solid rgba(6, 182, 212, 0.3); }
+
+    .log-message {
+      color: #c9d1d9;
+      line-height: 1.4;
+      word-break: break-all;
+      flex: 1;
+    }
+
+    .log-expand-arrow {
+      color: #565e75;
+      font-size: 0.65rem;
+      margin-left: auto;
+      transition: transform 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+    }
+
+    .log-row.expanded .log-expand-arrow {
+      transform: rotate(90deg);
+    }
+
+    .log-details {
+      display: none;
+      background: #090d16;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 6px;
+      padding: 0.75rem;
+      margin-top: 0.5rem;
+      margin-left: 2rem;
+      overflow-x: auto;
+    }
+
+    .log-row.expanded .log-details {
+      display: block;
+    }
+
+    .log-details pre {
+      margin: 0;
+      color: #8b9eb7;
+      font-size: 0.75rem;
+      line-height: 1.5;
+    }
+
+    .stack-trace {
+      color: #f87171;
+      margin-top: 0.5rem;
+      border-top: 1px dashed rgba(239, 68, 68, 0.2);
+      padding-top: 0.5rem;
+      white-space: pre-wrap;
+    }
+
+    .no-logs-msg {
+      color: #565e75;
+      text-align: center;
+      padding: 3rem 0;
+      font-style: italic;
+      width: 100%;
+    }
+
+    /* Notification popup */
+    .toast-container {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .toast {
+      background: rgba(22, 28, 45, 0.95);
+      border: 1px solid var(--border-color);
+      padding: 1rem 1.25rem;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+      transform: translateY(100px);
+      opacity: 0;
+      animation: slideIn 0.3s forwards;
+      min-width: 280px;
+    }
+
+    @keyframes slideIn {
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .toast.success { border-left: 4px solid var(--color-info); }
+    .toast.error { border-left: 4px solid var(--color-error); }
+    .toast.info { border-left: 4px solid var(--color-accent); }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.1);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo-container">
+      <div class="logo-icon">W</div>
+      <div class="logo-text">
+        <h1>WINSTON LOG ENGINE</h1>
+        <p>Advanced Global Error Handling Control Center</p>
+      </div>
+    </div>
+    <div class="status-badge">
+      <div class="status-dot"></div>
+      Server Online
+    </div>
+  </header>
+
+  <main>
+    <!-- Left Column: Controls -->
+    <div>
+      <!-- Card 1: Log Generator -->
+      <div class="card">
+        <h2 class="card-title">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+          Interactive Log Generator
+        </h2>
+        <div class="form-group">
+          <label for="logMessage">Log Message</label>
+          <input type="text" id="logMessage" value="Database operations processed successfully" placeholder="Type a custom log message...">
+        </div>
+        <label>Trigger Logging Level</label>
+        <div class="btn-grid">
+          <button class="btn btn-info" onclick="generateLog('info')">
+            Info
+          </button>
+          <button class="btn btn-warn" onclick="generateLog('warn')">
+            Warn
+          </button>
+          <button class="btn btn-error" onclick="generateLog('error')">
+            Error
+          </button>
+          <button class="btn btn-http" onclick="generateLog('http')">
+            HTTP
+          </button>
+          <button class="btn btn-debug" onclick="generateLog('debug')">
+            Debug
+          </button>
+        </div>
+      </div>
+
+      <!-- Card 2: Error Simulator -->
+      <div class="card">
+        <h2 class="card-title">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+          Error Simulation Studio
+        </h2>
+        <div class="error-simulator-grid">
+          <!-- 400 Operational -->
+          <div class="error-btn-card">
+            <div>
+              <h3 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.25rem;">400 Operational Error</h3>
+              <p class="error-info-text">Throws an expected AppError. Filtered dynamically in Production.</p>
+            </div>
+            <button class="btn btn-trigger" onclick="triggerError('operational')">Trigger 400</button>
+          </div>
+
+          <!-- 404 Not Found -->
+          <div class="error-btn-card">
+            <div>
+              <h3 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.25rem;">404 Route Not Found</h3>
+              <p class="error-info-text">Requests an unregistered route. Intercepted by catch-all router.</p>
+            </div>
+            <button class="btn btn-trigger" onclick="triggerError('404')">Trigger 404</button>
+          </div>
+
+          <!-- 500 Sync Exception -->
+          <div class="error-btn-card">
+            <div>
+              <h3 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.25rem;">500 Synchronous Error</h3>
+              <p class="error-info-text">Triggers a ReferenceError. Express catches & passes to error handler.</p>
+            </div>
+            <button class="btn btn-trigger" onclick="triggerError('sync')">Trigger Sync</button>
+          </div>
+
+          <!-- 500 Async Rejection -->
+          <div class="error-btn-card">
+            <div>
+              <h3 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.25rem;">500 Asynchronous Error</h3>
+              <p class="error-info-text">Rejects a promise inside an async function. Handled by try-catch catch-block.</p>
+            </div>
+            <button class="btn btn-trigger" onclick="triggerError('async')">Trigger Async</button>
+          </div>
+
+          <!-- Unhandled Rejection -->
+          <div class="error-btn-card" style="grid-column: span 2;">
+            <div>
+              <h3 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.25rem; color: #fca5a5;">Unhandled Promise Rejection</h3>
+              <p class="error-info-text">Rejects a promise with no catch. Intercepted by Winston's <code>rejectionHandlers</code> and saved to <code>rejections.log</code>.</p>
+            </div>
+            <button class="btn btn-trigger" onclick="triggerError('unhandled-rejection')">Trigger Rejection</button>
+          </div>
+
+          <!-- Uncaught Exception -->
+          <div class="error-btn-card" style="grid-column: span 2;">
+            <div>
+              <h3 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.25rem; color: #fca5a5;">Uncaught Exception</h3>
+              <p class="error-info-text">Throws error in background thread (setTimeout). Intercepted by Winston's <code>exceptionHandlers</code> and saved to <code>exceptions.log</code>.</p>
+            </div>
+            <button class="btn btn-trigger" onclick="triggerError('uncaught-exception')">Trigger Exception</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Console View -->
+    <div class="terminal-container">
+      <div class="terminal-header">
+        <div class="tab-bar">
+          <button class="tab-btn active" onclick="switchTab('combined', this)">Combined logs</button>
+          <button class="tab-btn" onclick="switchTab('error', this)">Errors</button>
+          <button class="tab-btn" onclick="switchTab('exceptions', this)">Exceptions</button>
+          <button class="tab-btn" onclick="switchTab('rejections', this)">Rejections</button>
+        </div>
+        <div class="terminal-controls">
+          <label class="refresh-toggle-label">
+            <input type="checkbox" id="autoRefresh" checked> Auto-refresh (2s)
+          </label>
+          <button class="btn-icon" title="Refresh Now" onclick="fetchLogs()">
+            <svg style="width:1.1rem; height:1.1rem" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H17.22"></path></svg>
+          </button>
+        </div>
+      </div>
+      <div class="terminal-body" id="logTerminal">
+        <!-- Log rows populated dynamically -->
+        <div class="no-logs-msg">Initializing log pipeline...</div>
+      </div>
+    </div>
+  </main>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script>
+    let currentTab = 'combined';
+    let refreshInterval = null;
+
+    // Initialize Page
+    document.addEventListener('DOMContentLoaded', () => {
+      fetchLogs();
+      setupAutoRefresh();
+      
+      document.getElementById('autoRefresh').addEventListener('change', setupAutoRefresh);
+    });
+
+    function setupAutoRefresh() {
+      const isChecked = document.getElementById('autoRefresh').checked;
+      if (isChecked) {
+        if (!refreshInterval) {
+          refreshInterval = setInterval(fetchLogs, 2000);
+        }
+      } else {
+        if (refreshInterval) {
+          clearInterval(refreshInterval);
+          refreshInterval = null;
+        }
+      }
+    }
+
+    // Show Custom Toast Notification
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      
+      let icon = '';
+      if (type === 'success') icon = '✓';
+      else if (type === 'error') icon = '⚠';
+      else icon = 'ℹ';
+      
+      toast.innerHTML = `<span style="font-weight: bold; font-size: 1.1rem;">${icon}</span> <span>${message}</span>`;
+      container.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.animation = 'slideIn 0.3s forwards reverse';
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
+    // Switch Log File Tab
+    function switchTab(tabName, element) {
+      currentTab = tabName;
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      element.classList.add('active');
+      fetchLogs();
+    }
+
+    // Generate Custom Log via POST
+    async function generateLog(level) {
+      const messageInput = document.getElementById('logMessage');
+      const message = messageInput.value.trim() || "Dynamic manual trigger message";
+      
+      try {
+        const response = await fetch('/api/logs/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ level, message })
+        });
+        const data = await response.json();
+        
+        if (response.ok) {
+          showToast(data.message, 'success');
+          messageInput.value = ''; // Clear message input
+          fetchLogs();
+        } else {
+          showToast(data.message, 'error');
+        }
+      } catch (err) {
+        showToast('Connection error failed to post log.', 'error');
+      }
+    }
+
+    // Trigger Server-side Error Simulation
+    async function triggerError(type) {
+      let endpoint = '';
+      if (type === 'operational') endpoint = '/api/errors/operational';
+      else if (type === '404') endpoint = '/api/errors/some-invalid-route-slug';
+      else if (type === 'sync') endpoint = '/api/errors/sync';
+      else if (type === 'async') endpoint = '/api/errors/async';
+      else if (type === 'unhandled-rejection') endpoint = '/api/errors/unhandled-rejection';
+      else if (type === 'uncaught-exception') endpoint = '/api/errors/uncaught-exception';
+
+      try {
+        showToast(`Triggering error at ${endpoint}...`, 'info');
+        const response = await fetch(endpoint);
+        const data = await response.json();
+        
+        if (!response.ok) {
+          showToast(`Error caught: [${response.status}] ${data.message}`, 'error');
+        } else {
+          showToast(`Request sent: ${data.message || 'Trigger completed'}`, 'success');
+        }
+        
+        // Wait slightly and fetch log files to capture result
+        setTimeout(fetchLogs, 500);
+      } catch (err) {
+        showToast('Endpoint triggered successfully (Expect connection breakdown if uncaught crash is configured).', 'warn');
+        setTimeout(fetchLogs, 1000);
+      }
+    }
+
+    // Fetch Log File contents
+    async function fetchLogs() {
+      const terminal = document.getElementById('logTerminal');
+      
+      try {
+        const response = await fetch(`/api/logs/view?type=${currentTab}`);
+        if (!response.ok) throw new Error('API failed');
+        
+        const data = await response.json();
+        const logs = data.logs || [];
+        
+        if (logs.length === 0) {
+          terminal.innerHTML = `<div class="no-logs-msg">No logs found in "${currentTab}.log" yet. Try triggering some actions!</div>`;
+          return;
+        }
+        
+        // Keep track of which logs are expanded using data attributes
+        const expandedIds = Array.from(terminal.querySelectorAll('.log-row.expanded'))
+                                 .map(el => el.getAttribute('data-timestamp'));
+
+        let html = '';
+        logs.forEach(log => {
+          const timestamp = log.timestamp || new Date().toISOString();
+          const level = log.level || 'info';
+          const message = log.message || '';
+          const hasDetails = log.metadata || log.stack || log.exception || log.reason;
+          const isExpanded = expandedIds.includes(timestamp);
+          
+          let levelClass = `badge-${level}`;
+          
+          // Custom structure for metadata detail viewing
+          let detailContent = '';
+          if (hasDetails) {
+            const displayObj = { ...log };
+            delete displayObj.timestamp;
+            delete displayObj.level;
+            delete displayObj.message;
+            
+            detailContent = `<pre><code>${JSON.stringify(displayObj, null, 2)}</code></pre>`;
+            if (log.stack) {
+              detailContent += `<div class="stack-trace">${log.stack}</div>`;
+            }
+          }
+          
+          html += `
+            <div class="log-row ${isExpanded ? 'expanded' : ''}" data-timestamp="${timestamp}">
+              <div class="log-meta-container" onclick="toggleLogRow(this.parentElement, ${!!hasDetails})">
+                <span class="log-timestamp">${timestamp.substring(11, 23)}</span>
+                <span class="log-badge ${levelClass}">${level}</span>
+                <span class="log-message">${escapeHtml(message)}</span>
+                ${hasDetails ? '<span class="log-expand-arrow">▶</span>' : ''}
+              </div>
+              ${hasDetails ? `<div class="log-details">${detailContent}</div>` : ''}
+            </div>
+          `;
+        });
+        
+        terminal.innerHTML = html;
+      } catch (err) {
+        console.error(err);
+        // Don't show toast on poll failures to avoid bothering the user
+      }
+    }
+
+    function toggleLogRow(rowElement, hasDetails) {
+      if (!hasDetails) return;
+      rowElement.classList.toggle('expanded');
+    }
+
+    function escapeHtml(text) {
+      const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      };
+      return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+  </script>
+</body>
+</html>
