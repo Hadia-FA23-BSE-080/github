@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stripe Payment Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f9;
+            margin: 0;
+        }
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 300px;
+        }
+        .card img {
+            max-width: 100%;
+            border-radius: 8px;
+        }
+        .price {
+            font-size: 24px;
+            color: #333;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+        button {
+            background-color: #635bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #4b45c6;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>Premium T-Shirt</h2>
+        <p>100% Cotton, Super Comfortable.</p>
+        <div class="price">₹500.00</div>
+        <button id="checkout-btn">Buy Now (Test)</button>
+    </div>
+
+    <script>
+        const button = document.getElementById('checkout-btn');
+
+        button.addEventListener('click', async () => {
+            button.disabled = true;
+            button.innerText = 'Processing...';
+
+            try {
+                // Backend API ko data bhej rahe hain
+                const response = await fetch('http://localhost:3000/create-payment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        products: [
+                            {
+                                name: 'Premium T-Shirt',
+                                price: 500, // Price in rupees
+                                quantity: 1
+                            }
+                        ]
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Agar session ban gaya, to user ko Stripe Checkout Page par bhej do
+                    window.location.href = data.url;
+                } else {
+                    console.error('Error:', data.error);
+                    alert('Payment session fail ho gaya: ' + data.error);
+                    button.disabled = false;
+                    button.innerText = 'Buy Now (Test)';
+                }
+            } catch (error) {
+                console.error('Fetch Error:', error);
+                alert('Server se connect nahi ho paya. Kya server on hai?');
+                button.disabled = false;
+                button.innerText = 'Buy Now (Test)';
+            }
+        });
+    </script>
+</body>
+</html>
