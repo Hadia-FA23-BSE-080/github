@@ -36,39 +36,52 @@ const fileFormat = winston.format.combine(
   winston.format.json()
 );
 
-const logger = winston.createLogger({
-  level: process.env.LOG_LEVEL || 'debug',
-  levels,
-  format: fileFormat,
-  transports: [
-    // Write errors to error.log
+const isVercel = process.env.VERCEL === '1' || !!process.env.VERCEL;
+
+const transports = [];
+const exceptionHandlers = [new winston.transports.Console({ format: consoleFormat })];
+const rejectionHandlers = [new winston.transports.Console({ format: consoleFormat })];
+
+if (isVercel) {
+  // On serverless Vercel, write logs only to console
+  transports.push(new winston.transports.Console({ format: consoleFormat }));
+} else {
+  // Local environment: write to files and console
+  transports.push(
     new winston.transports.File({
       filename: path.join(__dirname, '../../logs/error.log'),
       level: 'error',
       maxsize: 5242880, // 5MB
       maxFiles: 5,
     }),
-    // Write all logs to combined.log
     new winston.transports.File({
       filename: path.join(__dirname, '../../logs/combined.log'),
       maxsize: 5242880, // 5MB
       maxFiles: 5,
-    }),
-  ],
-  // Handle uncaught exceptions and unhandled promise rejections
-  exceptionHandlers: [
-    new winston.transports.File({ filename: path.join(__dirname, '../../logs/exceptions.log') }),
-    new winston.transports.Console({ format: consoleFormat })
-  ],
-  rejectionHandlers: [
-    new winston.transports.File({ filename: path.join(__dirname, '../../logs/rejections.log') }),
-    new winston.transports.Console({ format: consoleFormat })
-  ],
+    })
+  );
+
+  exceptionHandlers.push(
+    new winston.transports.File({ filename: path.join(__dirname, '../../logs/exceptions.log') })
+  );
+
+  rejectionHandlers.push(
+    new winston.transports.File({ filename: path.join(__dirname, '../../logs/rejections.log') })
+  );
+}
+
+const logger = winston.createLogger({
+  level: process.env.LOG_LEVEL || 'debug',
+  levels,
+  format: fileFormat,
+  transports,
+  exceptionHandlers,
+  rejectionHandlers,
   exitOnError: false // Do not exit on handled exceptions
 });
 
-// Always log to console in non-production environments
-if (process.env.NODE_ENV !== 'production') {
+// Always log to console in non-production environments (if not already added)
+if (process.env.NODE_ENV !== 'production' && !isVercel) {
   logger.add(
     new winston.transports.Console({
       format: consoleFormat,

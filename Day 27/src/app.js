@@ -131,7 +131,11 @@ app.get('/api/logs/view', (req, res) => {
   const logFilePath = path.join(__dirname, `../logs/${type}.log`);
 
   if (!fs.existsSync(logFilePath)) {
-    return res.status(200).json({ status: 'success', logs: [] });
+    return res.status(200).json({ 
+      status: 'success', 
+      logs: [],
+      isServerless: process.env.VERCEL === '1' || !!process.env.VERCEL
+    });
   }
 
   try {
@@ -150,7 +154,11 @@ app.get('/api/logs/view', (req, res) => {
       .reverse() // Show latest logs first
       .slice(0, 100); // Return up to 100 logs
 
-    res.status(200).json({ status: 'success', logs });
+    res.status(200).json({ 
+      status: 'success', 
+      logs,
+      isServerless: process.env.VERCEL === '1' || !!process.env.VERCEL
+    });
   } catch (error) {
     logger.error(`Error reading log file ${type}.log: ${error.message}`);
     res.status(500).json({ status: 'error', message: 'Failed to read server logs' });
